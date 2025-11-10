@@ -1,0 +1,143 @@
+# Cortext Workspace AI Rules
+
+## Project Context
+This is a Cortext workspace for AI-augmented knowledge work.
+
+## Workspace Structure
+- `.workspace/memory/constitution.md`: User's working principles and preferences
+- `conversations/`: All AI conversations organized by date (YYYY-MM/###-type-topic/)
+- `research/`: Formal research projects
+- `ideas/`: Unstructured ideation
+- `notes/`: Learning notes and references
+- `projects/`: Active project workspaces
+- `.workspace/registry.json`: Conversation type registry
+
+## Key Principles
+
+### 1. Read the Constitution First
+Before starting any work, read `.workspace/memory/constitution.md` to understand:
+- The user's communication preferences
+- Working principles and methodology
+- Technical preferences and guardrails
+- Current context and focus areas
+
+### 2. Maintain Structured Documentation
+- Use existing conversation templates
+- Keep consistent formatting
+- Add proper metadata (date, type, tags)
+- Cross-reference related conversations when relevant
+
+### 3. Git Workflow
+- Each conversation lives on its own branch (`conversation/###-type-topic`)
+- Commit atomically with structured messages
+- Use conventional commit types: `[conversation]`, `[research]`, `[decision]`, `[note]`
+- Reference related conversations in commits
+
+### 4. Conversation Types
+Use appropriate conversation templates:
+- **Brainstorm**: Free-form ideation and exploration
+- **Debug**: Systematic problem-solving
+- **Plan**: Feature and project planning
+- **Learn**: Learning notes and documentation
+- **Meeting**: Meeting notes with action items
+- **Review**: Code and design reviews
+
+### 5. Search Past Work
+Before answering questions or making suggestions:
+- Check if similar conversations exist
+- Look for relevant decisions in `.workspace/memory/decisions.md`
+- Cross-reference related topics
+- Build on past insights
+
+## When Creating Content
+
+### Structure
+- Use markdown formatting consistently
+- Include clear headers and sections
+- Add code blocks with syntax highlighting
+- Use checklists for actionable items
+
+### Metadata
+Always include:
+- Date and timestamp
+- Conversation type
+- Status (In Progress, Completed, etc.)
+- Tags for searchability
+
+### Cross-References
+Link to related work:
+- Reference conversation IDs
+- Link to decision logs
+- Note dependencies
+
+## Conversation Flow
+
+### Starting a Conversation
+1. Check current context (`.workspace/memory/context.md`)
+2. Identify appropriate conversation type
+3. Use the template structure
+4. Fill in metadata
+
+### During a Conversation
+- Stay focused on the conversation type's goals
+- Document key insights and decisions
+- Track action items with checkboxes
+- Note open questions
+
+### Ending a Conversation
+- Summarize key takeaways
+- List action items
+- Reference related conversations
+- Update decision log if applicable
+- Commit work to git
+
+## Working With Code
+
+### Code Quality
+- Follow user's preferences from constitution
+- Write tests as specified in working principles
+- Include error handling
+- Add inline documentation
+
+### Code Reviews
+- Use the review template
+- Provide constructive feedback
+- Suggest alternatives with rationale
+- Note both strengths and areas for improvement
+
+## Decision Making
+
+### Recording Decisions
+Add significant decisions to `.workspace/memory/decisions.md`:
+- Context: What led to this decision
+- Options considered with pros/cons
+- Final decision and rationale
+- Consequences and trade-offs
+
+### Referencing Decisions
+Check decision history before:
+- Proposing architectural changes
+- Suggesting new technologies
+- Recommending different approaches
+
+## Best Practices
+
+1. **Be Consistent**: Follow established patterns
+2. **Be Thorough**: Document reasoning, not just conclusions
+3. **Be Searchable**: Use clear language and tags
+4. **Be Connected**: Link related conversations
+5. **Be Respectful**: Honor the user's constitution
+
+## Tools and Commands
+
+Available conversation starters (if using appropriate AI tool):
+- `/workspace.brainstorm` - Start brainstorming
+- `/workspace.debug` - Debug a problem
+- `/workspace.plan` - Plan a feature
+- `/workspace.learn` - Document learning
+- `/workspace.meeting` - Capture meeting notes
+- `/workspace.review` - Conduct a review
+
+---
+
+**Remember**: This workspace is the user's external memory. Every conversation, decision, and insight captured here builds a persistent knowledge base. Treat it with care and maintain high quality.

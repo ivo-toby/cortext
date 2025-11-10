@@ -13,6 +13,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
+from cortext_cli.converters import (
+    convert_claude_commands_to_gemini,
+    create_opencode_config,
+)
 from cortext_cli.utils import (
     AGENT_CONFIG,
     StepTracker,
@@ -227,29 +231,50 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
         tracker.add_warning("Commands directory not found, skipping AI configuration")
         return
 
-    tools_to_configure = ["claude", "opencode", "gemini"] if ai == "all" else [ai]
-    commands_copied = 0
+    tools_to_configure = ["claude", "opencode", "gemini", "cursor"] if ai == "all" else [ai]
+    configured_tools = []
 
     for tool in tools_to_configure:
-        if tool not in AGENT_CONFIG:
-            continue
-
-        config = AGENT_CONFIG[tool]
-        tool_commands_dir = workspace_dir / config["commands_dir"]
-        tool_commands_dir.mkdir(parents=True, exist_ok=True)
-
-        # Copy Claude commands
         if tool == "claude":
+            # Copy Claude commands
+            claude_dir = workspace_dir / ".claude" / "commands"
+            claude_dir.mkdir(parents=True, exist_ok=True)
             for cmd_file in commands_dir.glob("*.md"):
-                dest_file = tool_commands_dir / cmd_file.name
+                dest_file = claude_dir / cmd_file.name
                 shutil.copy2(cmd_file, dest_file)
-                commands_copied += 1
+            configured_tools.append("Claude Code")
 
-        # For other tools, we'll add conversion logic later
-        # For now, just create the directory
+        elif tool == "gemini":
+            # Convert Claude commands to Gemini TOML
+            gemini_dir = workspace_dir / ".gemini" / "commands"
+            claude_dir = workspace_dir / ".claude" / "commands"
+            if claude_dir.exists():
+                converted = convert_claude_commands_to_gemini(claude_dir, gemini_dir)
+                if converted:
+                    configured_tools.append(f"Gemini CLI ({len(converted)} commands)")
 
-    if commands_copied > 0:
-        tracker.add_step(f"Configured {len(tools_to_configure)} AI tool(s)")
+        elif tool == "opencode":
+            # Create OpenCode configuration
+            create_opencode_config(workspace_dir)
+            # Copy commands to OpenCode format (same as Claude for now)
+            opencode_dir = workspace_dir / ".opencode" / "command"
+            opencode_dir.mkdir(parents=True, exist_ok=True)
+            for cmd_file in commands_dir.glob("*.md"):
+                dest_file = opencode_dir / cmd_file.name
+                shutil.copy2(cmd_file, dest_file)
+            configured_tools.append("OpenCode")
+
+        elif tool == "cursor":
+            # Copy Cursor rules
+            template_dir = get_template_dir()
+            cursorrules_src = template_dir / "cursorrules"
+            if cursorrules_src.exists():
+                cursorrules_dest = workspace_dir / ".cursorrules"
+                shutil.copy2(cursorrules_src, cursorrules_dest)
+                configured_tools.append("Cursor")
+
+    if configured_tools:
+        tracker.add_step(f"Configured: {', '.join(configured_tools)}")
     else:
         tracker.add_info("AI tool directories created")
 
