@@ -1,0 +1,261 @@
+# Cortext Implementation Tasks
+
+**Status**: Phase 0 - Foundation
+**Started**: 2025-11-10
+**Next Review**: After Phase 0 completion
+
+---
+
+## Phase 0: Foundation (Week 1)
+
+### Project Setup
+- [ ] Create Python package structure (src/cortext_cli/)
+- [ ] Set up pyproject.toml with dependencies (typer, rich, httpx, platformdirs)
+- [ ] Create package entry point (cortext_cli/__init__.py, main.py)
+- [ ] Set up templates/ directory structure
+- [ ] Set up scripts/bash/ and scripts/powershell/ directories
+- [ ] Create claude_commands/ directory for slash commands
+- [ ] Add .gitignore for Python project
+
+### CLI Core Commands
+- [ ] Implement `cortext check` - verify required tools (git, ollama, etc.)
+- [ ] Implement `cortext init` - initialize workspace structure
+- [ ] Create AI agent configuration (AGENT_CONFIG dict for claude, opencode, etc.)
+- [ ] Implement workspace directory creation function
+- [ ] Add progress tracking with StepTracker class (Rich library)
+
+### Templates - Core Conversation Types
+- [ ] Create templates/brainstorm.md
+- [ ] Create templates/debug-session.md
+- [ ] Create templates/feature-planning.md
+- [ ] Create templates/learning-notes.md
+- [ ] Create templates/meeting-notes.md
+- [ ] Create templates/review-template.md
+
+### Constitution System
+- [ ] Create templates/constitution.md with example structure
+- [ ] Create templates/context.md template
+- [ ] Create templates/preferences.md template
+- [ ] Create templates/decisions.md template
+
+---
+
+## Phase 1: Core Workspace (Week 2-3)
+
+### Bash Scripts - Common Utilities
+- [ ] Create scripts/bash/common.sh with utility functions
+  - [ ] Color definitions and print functions
+  - [ ] get_workspace_root()
+  - [ ] get_current_conversation_dir()
+  - [ ] get_next_id()
+  - [ ] copy_template()
+  - [ ] update_date_in_file()
+  - [ ] check_git_initialized()
+  - [ ] show_header()
+
+### Bash Scripts - Conversation Workflows
+- [ ] Create scripts/bash/brainstorm.sh
+- [ ] Create scripts/bash/debug.sh
+- [ ] Create scripts/bash/plan.sh
+- [ ] Create scripts/bash/learn.sh
+- [ ] Create scripts/bash/meeting.sh
+- [ ] Create scripts/bash/review.sh
+- [ ] Make all scripts executable (chmod +x)
+
+### Claude Code Slash Commands
+- [ ] Create claude_commands/workspace_brainstorm.md
+- [ ] Create claude_commands/workspace_debug.md
+- [ ] Create claude_commands/workspace_plan.md
+- [ ] Create claude_commands/workspace_learn.md
+- [ ] Create claude_commands/workspace_meeting.md
+- [ ] Create claude_commands/workspace_review.md
+
+### Registry System
+- [ ] Create templates/registry.json template
+- [ ] Implement register_conversation_type() function
+- [ ] Implement `cortext list` command to show conversation types
+- [ ] Create default registry with built-in types
+
+### Git Workflow
+- [ ] Create scripts/bash/commit-session.sh
+- [ ] Create scripts/bash/workspace-status.sh
+- [ ] Document git branch naming conventions
+- [ ] Document commit message format
+
+### Extensible Conversation Types
+- [ ] Implement `/workspace.add` slash command
+- [ ] Create AI-guided template creation workflow
+- [ ] Implement template validation
+- [ ] Add conversation type to registry automatically
+- [ ] Create corresponding slash command automatically
+- [ ] Commit new conversation type to git
+
+---
+
+## Phase 2: MCP Server - Basic (Week 4-5)
+
+### MCP Server Foundation
+- [ ] Create mcp-server/ directory structure
+- [ ] Set up MCP server package (Python)
+- [ ] Implement basic MCP protocol handler
+- [ ] Create server configuration
+
+### Search Implementation
+- [ ] Implement search_workspace tool (ripgrep wrapper)
+- [ ] Add keyword search across conversations
+- [ ] Add date range filtering
+- [ ] Add conversation type filtering
+- [ ] Implement result ranking
+
+### Claude Code Integration
+- [ ] Create MCP server configuration for Claude
+- [ ] Test search integration with Claude Code
+- [ ] Document MCP server usage
+
+### Indexing
+- [ ] Create scripts/bash/index-conversations.sh
+- [ ] Implement incremental indexing
+- [ ] Add metadata extraction from conversations
+
+---
+
+## Phase 3: Multi-AI Support (Week 6-7)
+
+### OpenCode Configuration
+- [ ] Create .opencode/ configuration structure
+- [ ] Convert Claude commands to OpenCode format
+- [ ] Test with Ollama integration
+- [ ] Document OpenCode setup
+
+### Gemini CLI Configuration
+- [ ] Create .gemini/ configuration structure
+- [ ] Convert commands to Gemini TOML format
+- [ ] Implement convert_md_to_toml() function
+- [ ] Document Gemini setup
+
+### Cursor Configuration
+- [ ] Create .cursorrules template
+- [ ] Test Cursor integration
+- [ ] Document Cursor setup
+
+### Tool-Agnostic Features
+- [ ] Update constitution to be tool-agnostic
+- [ ] Test workspace switching between tools
+- [ ] Create tool comparison documentation
+
+---
+
+## Phase 4: MCP Server - RAG (Week 8-10)
+
+### Ollama Integration
+- [ ] Add Ollama client to MCP server
+- [ ] Implement embedding generation (nomic-embed-text)
+- [ ] Add model configuration options
+- [ ] Test embedding performance
+
+### Vector Store
+- [ ] Integrate ChromaDB or FAISS
+- [ ] Implement vector storage schema
+- [ ] Add embedding persistence
+- [ ] Implement similarity search
+
+### Context Injection
+- [ ] Implement get_context tool
+- [ ] Add automatic context retrieval
+- [ ] Implement context ranking algorithm
+- [ ] Test context relevance
+
+### Performance Optimization
+- [ ] Add caching for embeddings
+- [ ] Optimize search queries
+- [ ] Benchmark search performance
+- [ ] Add performance monitoring
+
+---
+
+## Phase 5: Advanced Features (Week 11-12)
+
+### Template Sharing
+- [ ] Implement `/workspace.clone` command
+- [ ] Implement `/workspace.export` command
+- [ ] Implement `/workspace.import` command
+- [ ] Create export/import format (tar.gz)
+
+### Analytics
+- [ ] Implement get_decision_history tool
+- [ ] Add conversation statistics
+- [ ] Create trend analysis features
+- [ ] Implement timeline queries
+
+### Visualization
+- [ ] Create knowledge graph generator
+- [ ] Add related conversation suggestions
+- [ ] Implement topic clustering
+
+### Export Features
+- [ ] Add markdown export
+- [ ] Add PDF export (optional)
+- [ ] Implement conversation archiving
+
+---
+
+## Phase 6: Open Source Release (Week 13+)
+
+### Documentation
+- [ ] Write comprehensive README.md
+- [ ] Create installation guide
+- [ ] Write user guide with examples
+- [ ] Document all slash commands
+- [ ] Create MCP server documentation
+- [ ] Write contribution guide
+
+### Package Distribution
+- [ ] Finalize pyproject.toml
+- [ ] Test installation with uv
+- [ ] Test installation with pip
+- [ ] Create GitHub releases
+- [ ] Publish to PyPI (optional)
+
+### Community
+- [ ] Create GitHub repository
+- [ ] Add issue templates
+- [ ] Create demo video/screencast
+- [ ] Write blog post/article
+- [ ] Set up discussions/community forum
+
+### Testing
+- [ ] Add unit tests for CLI commands
+- [ ] Add integration tests for workflows
+- [ ] Test on Linux/macOS/Windows
+- [ ] Create test workspace for demos
+
+---
+
+## Tmux Integration (Ongoing)
+
+- [ ] Create tmux session script template
+- [ ] Add tmux status bar configuration
+- [ ] Create tmux hooks for auto-commit
+- [ ] Document tmux setup
+
+---
+
+## Progress Tracking
+
+### Phase 0: ⬜ Not Started
+### Phase 1: ⬜ Not Started
+### Phase 2: ⬜ Not Started
+### Phase 3: ⬜ Not Started
+### Phase 4: ⬜ Not Started
+### Phase 5: ⬜ Not Started
+### Phase 6: ⬜ Not Started
+
+---
+
+## Notes
+
+- Focus on Phase 0 first - get the foundation solid
+- Test each component before moving to next phase
+- Keep commits atomic and use conventional commit messages
+- Document as you go
+- ResearchKit patterns are the reference implementation
