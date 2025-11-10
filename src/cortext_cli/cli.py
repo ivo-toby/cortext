@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from cortext_cli.commands import check, init
+from cortext_cli.commands import check, init, list
 
 console = Console()
 
@@ -35,6 +35,7 @@ def callback(ctx: typer.Context):
                 "[dim]Commands:[/dim]\n"
                 "  [green]cortext init[/green]     Initialize a new workspace\n"
                 "  [green]cortext check[/green]    Check required tools\n"
+                "  [green]cortext list[/green]     List conversation types\n"
                 "  [green]cortext --help[/green]   Show all commands\n",
                 border_style="cyan",
             )
@@ -43,6 +44,7 @@ def callback(ctx: typer.Context):
 
 app.command()(check.check)
 app.command()(init.init)
+app.command(name="list")(list.list_types)
 
 
 def main():
