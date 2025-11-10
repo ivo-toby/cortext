@@ -9,72 +9,72 @@
 ## Phase 0: Foundation (Week 1)
 
 ### Project Setup
-- [ ] Create Python package structure (src/cortext_cli/)
-- [ ] Set up pyproject.toml with dependencies (typer, rich, httpx, platformdirs)
-- [ ] Create package entry point (cortext_cli/__init__.py, main.py)
-- [ ] Set up templates/ directory structure
-- [ ] Set up scripts/bash/ and scripts/powershell/ directories
-- [ ] Create claude_commands/ directory for slash commands
-- [ ] Add .gitignore for Python project
+- [x] Create Python package structure (src/cortext_cli/)
+- [x] Set up pyproject.toml with dependencies (typer, rich, httpx, platformdirs)
+- [x] Create package entry point (cortext_cli/__init__.py, main.py)
+- [x] Set up templates/ directory structure
+- [x] Set up scripts/bash/ and scripts/powershell/ directories
+- [x] Create claude_commands/ directory for slash commands
+- [x] Add .gitignore for Python project
 
 ### CLI Core Commands
-- [ ] Implement `cortext check` - verify required tools (git, ollama, etc.)
-- [ ] Implement `cortext init` - initialize workspace structure
-- [ ] Create AI agent configuration (AGENT_CONFIG dict for claude, opencode, etc.)
-- [ ] Implement workspace directory creation function
-- [ ] Add progress tracking with StepTracker class (Rich library)
+- [x] Implement `cortext check` - verify required tools (git, ollama, etc.)
+- [x] Implement `cortext init` - initialize workspace structure
+- [x] Create AI agent configuration (AGENT_CONFIG dict for claude, opencode, etc.)
+- [x] Implement workspace directory creation function
+- [x] Add progress tracking with StepTracker class (Rich library)
 
 ### Templates - Core Conversation Types
-- [ ] Create templates/brainstorm.md
-- [ ] Create templates/debug-session.md
-- [ ] Create templates/feature-planning.md
-- [ ] Create templates/learning-notes.md
-- [ ] Create templates/meeting-notes.md
-- [ ] Create templates/review-template.md
+- [x] Create templates/brainstorm.md
+- [x] Create templates/debug-session.md
+- [x] Create templates/feature-planning.md
+- [x] Create templates/learning-notes.md
+- [x] Create templates/meeting-notes.md
+- [x] Create templates/review-template.md
 
 ### Constitution System
-- [ ] Create templates/constitution.md with example structure
-- [ ] Create templates/context.md template
+- [x] Create templates/constitution.md with example structure (integrated into init command)
+- [x] Create templates/context.md template (integrated into init command)
 - [ ] Create templates/preferences.md template
-- [ ] Create templates/decisions.md template
+- [x] Create templates/decisions.md template (integrated into init command)
 
 ---
 
 ## Phase 1: Core Workspace (Week 2-3)
 
 ### Bash Scripts - Common Utilities
-- [ ] Create scripts/bash/common.sh with utility functions
-  - [ ] Color definitions and print functions
-  - [ ] get_workspace_root()
-  - [ ] get_current_conversation_dir()
-  - [ ] get_next_id()
-  - [ ] copy_template()
-  - [ ] update_date_in_file()
-  - [ ] check_git_initialized()
-  - [ ] show_header()
+- [x] Create scripts/bash/common.sh with utility functions
+  - [x] Color definitions and print functions
+  - [x] get_workspace_root()
+  - [x] get_current_conversation_dir()
+  - [x] get_next_id()
+  - [x] copy_template()
+  - [x] update_date_in_file()
+  - [x] check_git_initialized()
+  - [x] show_header()
 
 ### Bash Scripts - Conversation Workflows
-- [ ] Create scripts/bash/brainstorm.sh
-- [ ] Create scripts/bash/debug.sh
-- [ ] Create scripts/bash/plan.sh
-- [ ] Create scripts/bash/learn.sh
-- [ ] Create scripts/bash/meeting.sh
-- [ ] Create scripts/bash/review.sh
-- [ ] Make all scripts executable (chmod +x)
+- [x] Create scripts/bash/brainstorm.sh
+- [x] Create scripts/bash/debug.sh
+- [x] Create scripts/bash/plan.sh
+- [x] Create scripts/bash/learn.sh
+- [x] Create scripts/bash/meeting.sh
+- [x] Create scripts/bash/review.sh
+- [x] Make all scripts executable (chmod +x)
 
 ### Claude Code Slash Commands
-- [ ] Create claude_commands/workspace_brainstorm.md
-- [ ] Create claude_commands/workspace_debug.md
-- [ ] Create claude_commands/workspace_plan.md
-- [ ] Create claude_commands/workspace_learn.md
-- [ ] Create claude_commands/workspace_meeting.md
-- [ ] Create claude_commands/workspace_review.md
+- [x] Create claude_commands/workspace_brainstorm.md
+- [x] Create claude_commands/workspace_debug.md
+- [x] Create claude_commands/workspace_plan.md
+- [x] Create claude_commands/workspace_learn.md
+- [x] Create claude_commands/workspace_meeting.md
+- [x] Create claude_commands/workspace_review.md
 
 ### Registry System
-- [ ] Create templates/registry.json template
+- [x] Create templates/registry.json template (integrated into init command)
 - [ ] Implement register_conversation_type() function
 - [ ] Implement `cortext list` command to show conversation types
-- [ ] Create default registry with built-in types
+- [x] Create default registry with built-in types (integrated into init command)
 
 ### Git Workflow
 - [ ] Create scripts/bash/commit-session.sh
@@ -202,10 +202,10 @@
 ## Phase 6: Open Source Release (Week 13+)
 
 ### Documentation
-- [ ] Write comprehensive README.md
-- [ ] Create installation guide
+- [x] Write comprehensive README.md
+- [x] Create installation guide (in README)
 - [ ] Write user guide with examples
-- [ ] Document all slash commands
+- [x] Document all slash commands (in README)
 - [ ] Create MCP server documentation
 - [ ] Write contribution guide
 
@@ -242,13 +242,13 @@
 
 ## Progress Tracking
 
-### Phase 0: ⬜ Not Started
-### Phase 1: ⬜ Not Started
+### Phase 0: ✅ Complete (2025-11-10)
+### Phase 1: 🟡 In Progress (70% complete - bash scripts, templates, slash commands done)
 ### Phase 2: ⬜ Not Started
 ### Phase 3: ⬜ Not Started
 ### Phase 4: ⬜ Not Started
 ### Phase 5: ⬜ Not Started
-### Phase 6: ⬜ Not Started
+### Phase 6: 🟡 Partial (README done)
 
 ---
 
