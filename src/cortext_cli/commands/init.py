@@ -1,0 +1,506 @@
+"""Init command to create a new Cortext workspace."""
+
+import json
+import os
+import shutil
+import subprocess
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Confirm, Prompt
+
+from cortext_cli.utils import (
+    AGENT_CONFIG,
+    StepTracker,
+    get_commands_dir,
+    get_scripts_dir,
+    get_template_dir,
+)
+
+console = Console()
+
+
+def init(
+    workspace_name: Optional[str] = typer.Argument(None, help="Name for the workspace"),
+    ai: str = typer.Option(
+        "claude", help="AI tool to configure (claude, opencode, gemini, all)"
+    ),
+    path: Optional[str] = typer.Option(
+        None, help="Path for workspace (default: ~/ai-workspace)"
+    ),
+):
+    """Initialize a new Cortext workspace."""
+    console.print(
+        Panel.fit(
+            "[bold cyan]🧠 Cortext Workspace Initialization[/bold cyan]",
+            border_style="cyan",
+        )
+    )
+
+    # Determine workspace path
+    if path:
+        workspace_dir = Path(path).expanduser().resolve()
+    elif workspace_name:
+        workspace_dir = Path.home() / workspace_name
+    else:
+        workspace_dir = Path.home() / "ai-workspace"
+
+    # Check if directory exists
+    if workspace_dir.exists() and any(workspace_dir.iterdir()):
+        console.print(
+            f"\n[yellow]⚠ Directory already exists:[/yellow] {workspace_dir}"
+        )
+        if not Confirm.ask("Initialize workspace here anyway?"):
+            console.print("[dim]Cancelled.[/dim]")
+            raise typer.Exit()
+
+    # Create workspace directory
+    workspace_dir.mkdir(parents=True, exist_ok=True)
+    tracker = StepTracker("Initializing Workspace")
+
+    try:
+        # Initialize git if not already initialized
+        git_dir = workspace_dir / ".git"
+        if not git_dir.exists():
+            subprocess.run(
+                ["git", "init"], cwd=workspace_dir, check=True, capture_output=True
+            )
+            tracker.add_step("Initialized git repository")
+        else:
+            tracker.add_info("Git repository already exists")
+
+        # Create directory structure
+        create_workspace_structure(workspace_dir, tracker)
+
+        # Copy templates
+        copy_templates(workspace_dir, tracker)
+
+        # Copy scripts
+        copy_scripts(workspace_dir, tracker)
+
+        # Configure AI tools
+        configure_ai_tools(workspace_dir, ai, tracker)
+
+        # Create initial registry
+        create_registry(workspace_dir, tracker)
+
+        # Create initial constitution
+        create_constitution(workspace_dir, tracker)
+
+        # Initial git commit
+        try:
+            subprocess.run(
+                ["git", "add", "."], cwd=workspace_dir, check=True, capture_output=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "commit",
+                    "-m",
+                    "[workspace] Initialize Cortext workspace\n\n"
+                    "Created workspace structure with templates, scripts, and configuration.\n"
+                    f"AI tools configured: {ai}",
+                ],
+                cwd=workspace_dir,
+                check=True,
+                capture_output=True,
+            )
+            tracker.add_step("Created initial git commit")
+        except subprocess.CalledProcessError:
+            tracker.add_warning("Git commit failed (may be nothing to commit)")
+
+        # Display results
+        tracker.display()
+        console.print(
+            f"\n[green]✓ Workspace initialized successfully![/green]\n\n"
+            f"[cyan]Location:[/cyan] {workspace_dir}\n\n"
+            f"[cyan]Next steps:[/cyan]\n"
+            f"  1. cd {workspace_dir}\n"
+            f"  2. Review and customize .workspace/memory/constitution.md\n"
+            f"  3. Start your first conversation with your AI tool\n"
+        )
+
+        # Tool-specific instructions
+        if ai in ["claude", "all"]:
+            console.print(
+                f"\n[cyan]Claude Code:[/cyan]\n"
+                f"  - Run 'claude' in the workspace directory\n"
+                f"  - Available commands: /workspace.brainstorm, /workspace.debug, etc.\n"
+            )
+
+    except Exception as e:
+        console.print(f"\n[red]✗ Error during initialization:[/red] {e}")
+        raise typer.Exit(code=1)
+
+
+def create_workspace_structure(workspace_dir: Path, tracker: StepTracker):
+    """Create the .workspace directory structure."""
+    workspace_config = workspace_dir / ".workspace"
+
+    directories = [
+        workspace_config / "memory",
+        workspace_config / "scripts" / "bash",
+        workspace_config / "scripts" / "powershell",
+        workspace_config / "templates",
+        workspace_config / "exports",
+        workspace_dir / "conversations",
+        workspace_dir / "research",
+        workspace_dir / "ideas",
+        workspace_dir / "notes",
+        workspace_dir / "projects",
+    ]
+
+    for directory in directories:
+        directory.mkdir(parents=True, exist_ok=True)
+
+    tracker.add_step("Created directory structure")
+
+
+def copy_templates(workspace_dir: Path, tracker: StepTracker):
+    """Copy template files to workspace."""
+    template_dir = get_template_dir()
+    dest_dir = workspace_dir / ".workspace" / "templates"
+
+    if not template_dir.exists():
+        tracker.add_warning("Template directory not found, skipping templates")
+        return
+
+    # Copy all markdown templates
+    templates_copied = 0
+    for template_file in template_dir.glob("*.md"):
+        dest_file = dest_dir / template_file.name
+        shutil.copy2(template_file, dest_file)
+        templates_copied += 1
+
+    if templates_copied > 0:
+        tracker.add_step(f"Copied {templates_copied} templates")
+    else:
+        tracker.add_info("No templates found to copy")
+
+
+def copy_scripts(workspace_dir: Path, tracker: StepTracker):
+    """Copy script files to workspace."""
+    scripts_dir = get_scripts_dir()
+    dest_bash = workspace_dir / ".workspace" / "scripts" / "bash"
+    dest_ps = workspace_dir / ".workspace" / "scripts" / "powershell"
+
+    if not scripts_dir.exists():
+        tracker.add_warning("Scripts directory not found, skipping scripts")
+        return
+
+    scripts_copied = 0
+
+    # Copy bash scripts
+    bash_scripts = scripts_dir / "bash"
+    if bash_scripts.exists():
+        for script_file in bash_scripts.glob("*.sh"):
+            dest_file = dest_bash / script_file.name
+            shutil.copy2(script_file, dest_file)
+            # Make executable on Unix systems
+            if os.name != "nt":
+                os.chmod(dest_file, 0o755)
+            scripts_copied += 1
+
+    # Copy PowerShell scripts
+    ps_scripts = scripts_dir / "powershell"
+    if ps_scripts.exists():
+        for script_file in ps_scripts.glob("*.ps1"):
+            dest_file = dest_ps / script_file.name
+            shutil.copy2(script_file, dest_file)
+            scripts_copied += 1
+
+    if scripts_copied > 0:
+        tracker.add_step(f"Copied {scripts_copied} scripts")
+    else:
+        tracker.add_info("No scripts found to copy")
+
+
+def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
+    """Configure AI tool slash commands."""
+    commands_dir = get_commands_dir()
+
+    if not commands_dir.exists():
+        tracker.add_warning("Commands directory not found, skipping AI configuration")
+        return
+
+    tools_to_configure = ["claude", "opencode", "gemini"] if ai == "all" else [ai]
+    commands_copied = 0
+
+    for tool in tools_to_configure:
+        if tool not in AGENT_CONFIG:
+            continue
+
+        config = AGENT_CONFIG[tool]
+        tool_commands_dir = workspace_dir / config["commands_dir"]
+        tool_commands_dir.mkdir(parents=True, exist_ok=True)
+
+        # Copy Claude commands
+        if tool == "claude":
+            for cmd_file in commands_dir.glob("*.md"):
+                dest_file = tool_commands_dir / cmd_file.name
+                shutil.copy2(cmd_file, dest_file)
+                commands_copied += 1
+
+        # For other tools, we'll add conversion logic later
+        # For now, just create the directory
+
+    if commands_copied > 0:
+        tracker.add_step(f"Configured {len(tools_to_configure)} AI tool(s)")
+    else:
+        tracker.add_info("AI tool directories created")
+
+
+def create_registry(workspace_dir: Path, tracker: StepTracker):
+    """Create the initial conversation type registry."""
+    registry_path = workspace_dir / ".workspace" / "registry.json"
+
+    registry = {
+        "version": "1.0",
+        "created": datetime.now().isoformat(),
+        "conversation_types": {
+            "brainstorm": {
+                "name": "Brainstorm",
+                "template": ".workspace/templates/brainstorm.md",
+                "command": "/workspace.brainstorm",
+                "script": ".workspace/scripts/bash/brainstorm.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Ideation and exploration",
+                "sections": ["goals", "ideas", "themes", "next-steps"],
+            },
+            "debug": {
+                "name": "Debug",
+                "template": ".workspace/templates/debug-session.md",
+                "command": "/workspace.debug",
+                "script": ".workspace/scripts/bash/debug.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Problem solving and troubleshooting",
+                "sections": ["problem", "investigation", "solution", "learnings"],
+            },
+            "plan": {
+                "name": "Plan",
+                "template": ".workspace/templates/feature-planning.md",
+                "command": "/workspace.plan",
+                "script": ".workspace/scripts/bash/plan.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Feature and project planning",
+                "sections": ["goals", "requirements", "approach", "tasks"],
+            },
+            "learn": {
+                "name": "Learn",
+                "template": ".workspace/templates/learning-notes.md",
+                "command": "/workspace.learn",
+                "script": ".workspace/scripts/bash/learn.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Learning notes and documentation",
+                "sections": ["topic", "notes", "examples", "references"],
+            },
+            "meeting": {
+                "name": "Meeting",
+                "template": ".workspace/templates/meeting-notes.md",
+                "command": "/workspace.meeting",
+                "script": ".workspace/scripts/bash/meeting.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Meeting notes and action items",
+                "sections": ["attendees", "agenda", "notes", "actions"],
+            },
+            "review": {
+                "name": "Review",
+                "template": ".workspace/templates/review-template.md",
+                "command": "/workspace.review",
+                "script": ".workspace/scripts/bash/review.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Code and design review",
+                "sections": ["overview", "feedback", "suggestions", "decision"],
+            },
+        },
+        "statistics": {"total_conversations": 0, "by_type": {}},
+    }
+
+    registry_path.write_text(json.dumps(registry, indent=2))
+    tracker.add_step("Created conversation type registry")
+
+
+def create_constitution(workspace_dir: Path, tracker: StepTracker):
+    """Create initial constitution files."""
+    memory_dir = workspace_dir / ".workspace" / "memory"
+
+    # Constitution template
+    constitution = """# Personal Constitution
+
+**Last Updated:** {date}
+
+This document defines your working style, principles, and preferences. All AI tools read this file to understand how to work with you effectively.
+
+---
+
+## Communication Style
+
+### Tone & Approach
+- **Formality:** [Casual / Professional / Mix]
+- **Response Length:** [Concise / Detailed / Varies by context]
+- **Thinking Style:** [Step-by-step / Big picture first / Both]
+
+### Preferred Formats
+- Code snippets with explanations
+- Bullet points for clarity
+- Examples when introducing new concepts
+- Analogies for complex ideas
+
+---
+
+## Working Principles
+
+### Development Practices
+- Write tests [before/after/alongside] implementation
+- Prioritize [readability/performance/maintainability]
+- Documentation: [Inline comments/Separate docs/Both]
+- Error handling: [Explicit/Graceful/Fail-fast]
+
+### Code Review
+- Focus on [logic/style/security/all]
+- Provide [brief/detailed] feedback
+- Suggest alternatives when critiquing
+
+---
+
+## Technical Preferences
+
+### Languages & Frameworks
+**Primary:**
+- [Your main programming languages]
+
+**Familiar with:**
+- [Languages you know but don't use daily]
+
+**Learning:**
+- [Technologies you're currently exploring]
+
+### Tools & Environment
+- Editor: [VS Code / Vim / etc.]
+- Terminal: [Bash / Zsh / Fish / PowerShell]
+- Version Control: [Git workflow preferences]
+
+---
+
+## Guardrails & Boundaries
+
+### Technologies to Prefer
+- [Specific libraries, frameworks, or tools you like]
+
+### Technologies to Avoid
+- [Tools or approaches you prefer not to use, with reasons]
+
+### Architectural Principles
+- [SOLID, DRY, KISS, etc. - your priorities]
+- [Specific patterns you follow]
+
+### Security & Compliance
+- [Security practices you follow]
+- [Compliance requirements if any]
+
+---
+
+## Context & Expertise
+
+### Domain Knowledge
+- [Your areas of expertise]
+- [Industries or domains you work in]
+
+### Current Focus
+- [What you're working on right now]
+- [Short-term learning goals]
+
+### Long-term Goals
+- [Career or skill development objectives]
+
+---
+
+## Notes
+
+This is a living document. Update it as your preferences and context evolve.
+"""
+
+    constitution_path = memory_dir / "constitution.md"
+    constitution_path.write_text(constitution.format(date=datetime.now().strftime("%Y-%m-%d")))
+
+    # Context file
+    context = """# Current Context
+
+**Last Updated:** {date}
+
+## Active Projects
+
+### [Project Name]
+- **Status:** [Planning / In Progress / On Hold]
+- **Priority:** [High / Medium / Low]
+- **Description:** [Brief description]
+- **Key Files:** [Important files or directories]
+
+## Current Focus Areas
+
+- [ ] [Task or area of focus]
+- [ ] [Another focus area]
+
+## Blockers & Questions
+
+- [Any current blockers or open questions]
+
+---
+
+**Note:** Update this regularly to keep AI assistants informed of your current work.
+"""
+
+    context_path = memory_dir / "context.md"
+    context_path.write_text(context.format(date=datetime.now().strftime("%Y-%m-%d")))
+
+    # Decisions log
+    decisions = """# Decisions Log
+
+**Purpose:** Track important technical and architectural decisions
+
+---
+
+## {date}
+
+### [Decision Title]
+**Context:** [What led to this decision]
+
+**Options Considered:**
+1. [Option 1] - [Pros/Cons]
+2. [Option 2] - [Pros/Cons]
+
+**Decision:** [What was chosen]
+
+**Rationale:** [Why this was the best choice]
+
+**Consequences:** [Impact and trade-offs]
+
+---
+
+Template for new decisions:
+```markdown
+## YYYY-MM-DD
+
+### [Decision Title]
+**Context:**
+**Options Considered:**
+**Decision:**
+**Rationale:**
+**Consequences:**
+```
+"""
+
+    decisions_path = memory_dir / "decisions.md"
+    decisions_path.write_text(decisions.format(date=datetime.now().strftime("%Y-%m-%d")))
+
+    tracker.add_step("Created constitution and memory files")
