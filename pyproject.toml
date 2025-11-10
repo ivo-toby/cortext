@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 cortext = "cortext_cli:main"
+cortext-mcp = "cortext_mcp.server:main"
 
 [build-system]
 requires = ["hatchling"]

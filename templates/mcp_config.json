@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cortext": {
+      "command": "cortext-mcp",
+      "args": [],
+      "env": {}
+    }
+  }
+}
