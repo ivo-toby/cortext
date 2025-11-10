@@ -91,6 +91,8 @@ Once your workspace is initialized, Claude Code will have access to conversation
 └── projects/               # Active projects
 ```
 
+For complete usage instructions, see **[User Guide](Docs/user-guide.md)**.
+
 ---
 
 ## 📚 Core Concepts
@@ -165,17 +167,19 @@ Optional:
 
 ---
 
-## 📋 Roadmap
+## 📋 Status
 
 - **Phase 0:** Foundation & core structure ✅
-- **Phase 1:** Templates, commands, registry (In Progress)
-- **Phase 2:** MCP server with basic search
-- **Phase 3:** Multi-AI tool support
-- **Phase 4:** RAG with semantic search
-- **Phase 5:** Advanced features (analytics, export)
-- **Phase 6:** Open source release
+- **Phase 1:** Templates, commands, registry ✅
+- **Phase 2:** MCP server with search ✅
+- **Phase 3:** Multi-AI tool support ✅
+- **Phase 4:** RAG with Ollama (deferred - requires setup)
+- **Phase 5:** Advanced features (deferred - polish phase)
+- **Phase 6:** Documentation & release ✅
 
-See `Docs/spec.md` for complete architecture and roadmap.
+**Current Status**: ✅ **Production Ready** - Core functionality complete and tested.
+
+See `Docs/spec.md` for complete architecture and `Docs/user-guide.md` for usage.
 
 ---
 
