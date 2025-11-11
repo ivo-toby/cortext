@@ -1,84 +1,74 @@
 ---
-description: Start a feature or project planning session
-tags: [workspace, planning, features]
+description: Start a planning conversation for collaborative feature/project planning
+tags: [workspace, planning, features, conversation]
 ---
 
 # Workspace Plan
 
-You are helping the user plan a feature or project in their Cortext workspace.
+You are helping the user plan through conversation in their Cortext workspace.
 
 ## Your Task
 
-1. **Get the feature/project name**
-   - Ask what they want to plan
-   - Example: "What feature or project are you planning?"
+### 1. Initialize the Planning Session
 
-2. **Run the planning script**
-   ```bash
-   .workspace/scripts/bash/plan.sh "<feature-name>"
-   ```
+- Ask: "What are you planning?"
+- Run the bash script to create the conversation:
+  ```bash
+  .workspace/scripts/bash/plan.sh "<feature-name>"
+  ```
+- This creates a minimal document
 
-   This will:
-   - Create a new conversation directory with auto-incremented ID
-   - Create a git branch for this conversation
-   - Copy the planning template
-   - Make an initial commit
+### 2. Plan Collaboratively Through Dialogue
 
-3. **Guide the planning process**
+**This is iterative planning, not upfront specification.**
 
-   **Phase 1: Define & Scope**
-   - Clarify goals and success criteria
-   - Identify requirements (functional & non-functional)
-   - Define what's explicitly out of scope
+- Discuss goals and desired outcomes
+- Explore different approaches together
+- Break down the work collaboratively
+- Surface concerns and trade-offs
+- Refine as you discuss
 
-   **Phase 2: Design**
-   - Explore technical approaches
-   - Discuss trade-offs and alternatives
-   - Make architectural decisions
-   - Consider dependencies and constraints
+**Keep planning conversational:**
+- "What are we trying to achieve?"
+- "How might we approach this?"
+- "What concerns do you have?"
+- "Should we break that down further?"
 
-   **Phase 3: Break Down**
-   - Divide into phases or milestones
-   - Create concrete, actionable tasks
-   - Estimate complexity and duration
-   - Identify risks and mitigation strategies
+### 3. Refine the Plan During Conversation
 
-   **Phase 4: Operationalize**
-   - Define testing strategy
-   - Plan rollout and monitoring
-   - Document what needs documentation
+**Use the Edit tool throughout** to update the plan document:
 
-4. **Document decisions**
-   - Record key decisions with rationale
-   - Capture alternatives considered
-   - Note assumptions and constraints
+- Add goals as they're clarified
+- Document approaches as you explore them
+- Break down tasks as you identify them
+- Capture decisions and rationale
+- Note trade-offs and considerations
+
+**Don't finalize upfront** - let the plan evolve through dialogue.
+
+### 4. Iterate Until Direction is Clear
+
+**Planning is iterative, not one-shot.**
+
+- Refine as you discuss
+- It's okay to revise earlier ideas
+- Let ambiguity surface through conversation
+- Continue until the user feels ready to start
+
+## Planning Approaches
+
+Mix these naturally:
+
+- **Start with why** - What problem are we solving?
+- **Think big, start small** - What's the MVP?
+- **Consider alternatives** - What other approaches exist?
+- **Identify risks** - What could go wrong?
+- **Break it down** - What are the concrete steps?
 
 ## Best Practices
 
-- Start with "why" - understand the motivation
-- Define success metrics upfront
-- Consider non-functional requirements early (performance, security, etc.)
-- Break large features into shippable increments
-- Identify dependencies and blockers early
-- Think about testing and rollback from the start
-- Document decisions and rationale, not just the plan
-- Review the constitution for relevant working principles
-
-## Questions to Ask
-
-- What problem does this solve for users?
-- What are the success criteria?
-- What are the must-haves vs nice-to-haves?
-- What are the risks and unknowns?
-- What dependencies exist?
-- How will we test this?
-- How will we monitor this in production?
-- What could go wrong?
-
-## When Complete
-
-- Summarize the plan and next steps
-- Ensure all phases have clear deliverables
-- Commit the planning document
-- Consider creating follow-up tasks or issues
-- Reference this plan in implementation work
+- **Collaborate, don't dictate** - Plan together
+- **Update plan as it evolves** - Living document
+- **Surface assumptions** - Make thinking explicit
+- **Consider trade-offs** - No perfect solutions
+- **Stay flexible** - Plans change, that's normal

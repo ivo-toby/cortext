@@ -1,67 +1,76 @@
 ---
-description: Start a debugging session for problem solving and troubleshooting
-tags: [workspace, debug, troubleshooting]
+description: Start a debugging conversation with investigative dialogue
+tags: [workspace, debug, troubleshooting, conversation]
 ---
 
 # Workspace Debug
 
-You are helping the user debug an issue in their Cortext workspace.
+You are helping the user debug through conversation in their Cortext workspace.
 
 ## Your Task
 
-1. **Understand the problem**
-   - Ask the user to describe the issue
-   - Gather context: when it started, what changed, impact
-   - Example: "What issue are you trying to debug?"
+### 1. Initialize the Debug Session
 
-2. **Run the debug script**
-   ```bash
-   .workspace/scripts/bash/debug.sh "<issue>"
-   ```
+- Ask: "What issue are you debugging?"
+- Run the bash script to create the conversation:
+  ```bash
+  .workspace/scripts/bash/debug.sh "<issue>"
+  ```
+- This creates a minimal document
 
-   This will:
-   - Create a new conversation directory with auto-incremented ID
-   - Create a git branch for this conversation
-   - Copy the debug template
-   - Make an initial commit
+### 2. Investigate Through Dialogue
 
-3. **Systematic investigation**
-   - Help document observed vs expected behavior
-   - Gather reproduction steps
-   - Collect logs, error messages, and evidence
-   - Form and test hypotheses
-   - Rule out causes systematically
-   - Identify root cause
+**This is collaborative investigation, not a checklist.**
 
-4. **Document the solution**
-   - Record the fix and verification steps
-   - Capture learnings and prevention measures
-   - Update relevant documentation
-   - Commit the findings
+- Ask about symptoms and context
+- Help gather relevant information
+- Suggest debugging approaches
+- Work through hypotheses together
+- Follow the investigation where it leads
+
+**Keep investigating:**
+- "What happens if we try...?"
+- "Can you show me the error?"
+- "When did this start happening?"
+- "What changed recently?"
+
+### 3. Document Findings in Real-Time
+
+**Use the Edit tool as you investigate** to update the debug document:
+
+- Add symptoms and context as discovered
+- Document tests and their results
+- Capture hypotheses (even ones ruled out)
+- Note the solution when found
+- Record insights for future reference
+
+**Don't wait until solved** - document the investigation process as it happens.
+
+### 4. Continue Until Resolved or Next Steps Clear
+
+**Don't force premature conclusions.**
+
+- Keep investigating as long as productive
+- It's okay to not solve it in one session
+- Document what was tried for next time
+- Let the user decide when to pause
+
+## Debugging Approaches
+
+Use these techniques naturally:
+
+- **Reproduce first** - Can we make it happen consistently?
+- **Isolate** - What's the minimal case that shows the issue?
+- **Binary search** - What changed between working and broken?
+- **Compare** - How does this differ from what works?
+- **Logs and errors** - What do they tell us?
+- **Hypothesis testing** - Let's try X to see if Y
 
 ## Best Practices
 
-- Use the scientific method: hypothesize, test, observe, conclude
-- Document everything - even dead ends are valuable
-- Verify the fix actually works
-- Think about prevention, not just fixing
-- Consider similar issues that might exist
-- Update monitoring and alerting if relevant
-
-## Debugging Strategies
-
-- Binary search: divide problem space in half
-- Add logging/instrumentation
-- Reproduce in isolation
-- Compare working vs broken states
-- Check recent changes (git log)
-- Review assumptions
-- Rubber duck debugging
-
-## When Complete
-
-- Summarize the root cause and solution
-- Document lessons learned
-- Identify prevention measures
-- Commit the debug session
-- Update any relevant guides or documentation
+- **Ask before assuming** - Get the full picture
+- **Document as you go** - Don't lose investigation progress
+- **Test one thing at a time** - Isolate variables
+- **Consider simple causes first** - Occam's razor
+- **Be methodical** - Track what's been tried
+- **Capture learnings** - Even failed approaches teach us

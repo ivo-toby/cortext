@@ -41,41 +41,42 @@ Ask these questions one at a time:
 
 ### Step 2: Generate Template
 
-Based on the answers, create a markdown template following this structure:
+Create a **minimal template** (target ~30 lines) following this philosophy:
+
+**Template Philosophy**: Scaffolding, not forms. Flexible structure, not prescriptive fields.
 
 ```markdown
 # {Type Name}: [TITLE]
 
 **ID**: [ID]
 **Date**: [DATE]
-**Type**: {type_name}
 **Status**: In Progress
 
 ---
 
 ## {Section 1}
 
-{Content based on user's description}
+[Open-ended content area]
+
+---
 
 ## {Section 2}
 
-{Content based on user's description}
-
-...
+[Open-ended content area]
 
 ---
 
 **Metadata**
 - Created: [DATE]
-- Last Modified: [DATE]
 - Tags: {type_name}, [custom-tags]
 ```
 
 **Important**:
-- Use `[PLACEHOLDERS]` for values that will be filled in
-- Include all sections the user mentioned
-- Add helpful prompts and examples
-- Keep it structured but flexible
+- Keep it under 50 lines total
+- Use 3-5 broad sections maximum (based on user's needs)
+- NO nested subsections or prescriptive fields
+- Use generic placeholders like [Document here], not questionnaires
+- Leave white space for organic content growth
 
 ### Step 3: Generate Bash Script
 
@@ -167,12 +168,12 @@ chmod +x .workspace/scripts/bash/{type_name}.sh
 
 ### Step 4: Generate Slash Command
 
-Create `.claude/commands/workspace_{type_name}.md`:
+Create `.claude/commands/workspace_{type_name}.md` with **conversation-first instructions**:
 
 ```markdown
 ---
 description: {description}
-tags: [workspace, {type_name}]
+tags: [workspace, {type_name}, conversation]
 ---
 
 # Workspace {Type Name}
@@ -181,25 +182,42 @@ You are helping the user with a {type_name} conversation.
 
 ## Your Task
 
-1. **Get the details**
-   - Ask: "What would you like to call this {type_name}?"
+### 1. Initialize
+- Ask what they want to work on
+- Run: `.workspace/scripts/bash/{type_name}.sh "<title>"`
+- Creates minimal document
 
-2. **Run the script**
-   ```bash
-   .workspace/scripts/bash/{type_name}.sh "<title>"
-   ```
+### 2. Engage in Dialogue
 
-3. **Guide the process**
-   {Specific guidance based on the conversation type}
+**This is a conversation, not template-filling.**
 
-4. **Document effectively**
-   {What should be captured and how}
+- {Conversation approach based on type}
+- Keep exploring through natural dialogue
+- Build on user's responses
+- Let conversation flow naturally
 
-## When Complete
+### 3. Document as You Go
 
-- Summarize the session
-- Commit the work
-- Suggest next steps
+**Use Edit tool frequently during conversation:**
+
+- Update document as insights emerge
+- Capture key points in real-time
+- Don't wait until the end
+- Let structure emerge organically
+
+### 4. Continue Until Naturally Complete
+
+- Don't rush to finish
+- Keep conversation going
+- Let user signal when satisfied
+- Offer to explore further
+
+## Best Practices
+
+- Be conversational, not procedural
+- Update document during dialogue
+- Follow user's curiosity
+- Natural completion, not forced
 ```
 
 ### Step 5: Update Registry

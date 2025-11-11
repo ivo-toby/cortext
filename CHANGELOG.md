@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### Conversation Workflows Redesign
+- **Conversation-first approach**: Transformed all conversation workflows from template-filling to dialogue-based interaction
+  - Conversations now emphasize ongoing dialogue with real-time documentation
+  - Claude uses Edit tool frequently during conversation to update documents
+  - Natural completion signals replace forced "finalization" steps
+  - Users experience collaborative discussion, not form-filling
+
+#### Template Simplification
+- **Minimal scaffolding philosophy**: All templates redesigned as flexible frameworks, not prescriptive forms
+  - `learning-notes.md`: Reduced from 248 lines to 30 lines
+  - `brainstorm.md`: Simplified from 82 lines to 36 lines
+  - `debug-session.md`: Simplified from 159 lines to 36 lines
+  - `feature-planning.md`: Simplified to 36 lines with open-ended sections
+  - `meeting-notes.md`: Simplified to 36 lines for real-time capture
+  - `review-template.md`: Simplified to 36 lines for collaborative feedback
+  - Removed nested subsections and prescriptive field structures
+  - Templates now provide basic structure without dictating content organization
+  - White space for organic content growth
+
+#### Slash Command Instructions
+- **Rewrote all 6 conversation slash commands** to emphasize dialogue over template generation
+  - `workspace_learn.md`: Exploratory conversation with progressive learning
+  - `workspace_brainstorm.md`: Iterative ideation with emergent ideas
+  - `workspace_debug.md`: Investigative dialogue with real-time findings
+  - `workspace_plan.md`: Collaborative planning through iterative refinement
+  - `workspace_meeting.md`: Real-time documentation during discussion
+  - `workspace_review.md`: Collaborative feedback through back-and-forth
+  - All commands now instruct Claude to use Edit tool throughout conversation
+  - Removed "completion" mentality - conversations continue naturally
+  - Added example dialogue patterns showing natural flow
+
+#### Custom Type Generation
+- **Updated `workspace_add.md`** to generate conversation-first custom types
+  - Creates minimal templates (under 50 lines) following scaffolding philosophy
+  - Generates slash commands with conversation-first instructions
+  - Custom types automatically follow dialogue-based pattern
+  - Emphasizes real-time documentation during conversation
+
+### Technical Details
+- **No breaking changes**: Bash scripts, registry, and data structures unchanged
+- **Pure UX improvement**: Only affects templates and slash command instructions
+- **Backward compatible**: Existing conversations unaffected
+- **Requirements tracked**: 8 new spec requirements added across 2 spec deltas
+
+### Files Changed
+- Templates: `learning-notes.md`, `brainstorm.md`, `debug-session.md`, `feature-planning.md`, `meeting-notes.md`, `review-template.md`
+- Slash commands: `workspace_learn.md`, `workspace_brainstorm.md`, `workspace_debug.md`, `workspace_plan.md`, `workspace_meeting.md`, `workspace_review.md`
+- Custom type generation: `workspace_add.md`
+
 ### Added
 
 #### Conversation Folder Organization

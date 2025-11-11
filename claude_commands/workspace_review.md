@@ -1,114 +1,74 @@
 ---
-description: Conduct a code or design review
-tags: [workspace, review, code-review]
+description: Conduct a review through collaborative dialogue
+tags: [workspace, review, feedback, conversation]
 ---
 
 # Workspace Review
 
-You are helping the user conduct a code or design review in their Cortext workspace.
+You are helping the user conduct a review through conversation in their Cortext workspace.
 
 ## Your Task
 
-1. **Get the review title**
-   - Ask what's being reviewed
-   - Example: "What are you reviewing?"
+### 1. Initialize the Review Session
 
-2. **Run the review script**
-   ```bash
-   .workspace/scripts/bash/review.sh "<review-title>"
-   ```
+- Ask: "What are you reviewing?"
+- Run the bash script to create the conversation:
+  ```bash
+  .workspace/scripts/bash/review.sh "<review-title>"
+  ```
+- This creates a minimal document
 
-   This will:
-   - Create a new conversation directory with auto-incremented ID
-   - Create a git branch for this conversation
-   - Copy the review template
-   - Make an initial commit
+### 2. Review Through Dialogue
 
-3. **Conduct a thorough review**
+**This is collaborative feedback, not a checklist audit.**
 
-   **Understand Context**
-   - What's being reviewed and why
-   - What are the goals
-   - What should you focus on
+- Discuss what's being reviewed
+- Explore strengths and concerns together
+- Suggest improvements through conversation
+- Build understanding through back-and-forth
+- Consider trade-offs and context
 
-   **Assess Quality**
-   - Correctness and logic
-   - Code quality (readability, naming, structure)
-   - Performance implications
-   - Security considerations
-   - Testing coverage
-   - Documentation clarity
-   - Maintainability
+**Keep it conversational:**
+- "What's the goal here?"
+- "Have you considered...?"
+- "What if we approached it this way?"
+- "I'm curious about this part..."
 
-   **Provide Feedback**
-   - Categorize: Critical / Major / Minor
-   - Be specific about location (file:line)
-   - Explain the problem, not just point it out
-   - Suggest concrete improvements
-   - Provide examples when helpful
-   - Balance criticism with recognition of strengths
+### 3. Document Feedback as You Discuss
 
-   **Make Recommendations**
-   - Must-have changes (blocking)
-   - Should-have changes (strongly recommended)
-   - Nice-to-have changes (optional improvements)
+**Use the Edit tool throughout the review** to capture feedback:
 
-4. **Document the review**
-   - Overall assessment and rating
-   - Detailed feedback by category
-   - Questions for the author
-   - Alternative approaches if applicable
-   - Learning points and positive patterns
-   - Final verdict with conditions
+- Note what works well
+- Capture concerns as they arise
+- Document suggestions and alternatives
+- Record decisions made during discussion
+- Keep it constructive and actionable
 
-## Review Principles
+**Don't save feedback for the end** - capture it as you discuss.
 
-**Be Constructive**
-- Focus on the code, not the person
-- Assume good intent
-- Explain "why" for feedback
-- Suggest solutions, not just problems
-- Recognize good work
+### 4. Continue Until Review is Complete
 
-**Be Specific**
-- Reference exact locations
-- Provide concrete examples
-- Explain impact of issues
-- Suggest specific improvements
+**Review at the pace that makes sense.**
 
-**Be Balanced**
-- Note strengths and areas for improvement
-- Distinguish between opinions and best practices
-- Prioritize feedback (not everything is critical)
+- Deep dive where important
+- Skim where appropriate
+- It's okay to revisit earlier points
+- Let the user signal when done
 
-## Review Checklist
+## Review Approaches
 
-**Code Reviews**
-- [ ] Logic and correctness
-- [ ] Edge cases handled
-- [ ] Error handling
-- [ ] Performance
-- [ ] Security vulnerabilities
-- [ ] Code style and conventions
-- [ ] Naming and readability
-- [ ] Tests and coverage
-- [ ] Documentation
+Mix these techniques:
 
-**Design Reviews**
-- [ ] Meets requirements
-- [ ] Architectural soundness
-- [ ] Scalability considerations
-- [ ] Security model
-- [ ] API design
-- [ ] Data model
-- [ ] Dependencies
-- [ ] Operational considerations
+- **Understand intent first** - What's this trying to achieve?
+- **Ask questions** - Why this approach?
+- **Suggest alternatives** - What about...?
+- **Consider implications** - What happens if...?
+- **Balance critique with recognition** - What works well?
 
-## When Complete
+## Best Practices
 
-- Summarize overall assessment
-- Provide clear verdict (approve/request changes)
-- List must-do action items
-- Commit the review
-- Share feedback with author
-- Follow up on changes if needed
+- **Be collaborative** - Review together, not at
+- **Stay constructive** - Suggestions, not just criticism
+- **Document as you go** - Don't lose insights
+- **Consider context** - Trade-offs matter
+- **Be specific** - Concrete feedback is actionable

@@ -1,93 +1,73 @@
 ---
-description: Create structured meeting notes with action items
-tags: [workspace, meeting, notes]
+description: Document a meeting conversation in real-time
+tags: [workspace, meeting, notes, conversation]
 ---
 
 # Workspace Meeting
 
-You are helping the user document a meeting in their Cortext workspace.
+You are helping the user document a meeting through conversation in their Cortext workspace.
 
 ## Your Task
 
-1. **Get the meeting title**
-   - Ask for the meeting name or purpose
-   - Example: "What meeting are you documenting?"
+### 1. Initialize the Meeting Session
 
-2. **Run the meeting script**
-   ```bash
-   .workspace/scripts/bash/meeting.sh "<meeting-title>"
-   ```
+- Ask: "What meeting are you documenting?"
+- Run the bash script to create the conversation:
+  ```bash
+  .workspace/scripts/bash/meeting.sh "<meeting-title>"
+  ```
+- This creates a minimal document
 
-   This will:
-   - Create a new conversation directory with auto-incremented ID
-   - Create a git branch for this conversation
-   - Copy the meeting notes template
-   - Make an initial commit
+### 2. Document During the Meeting
 
-3. **Capture meeting details**
+**This is real-time capture, not post-meeting summary.**
 
-   **Before/Start of Meeting**
-   - List attendees and roles
-   - Note the agenda
-   - Record date, time, and duration
+- Help capture key points as discussed
+- Document decisions as they're made
+- Note action items as they come up
+- Ask clarifying questions if needed
 
-   **During Meeting**
-   - Document discussion points by agenda item
-   - Capture decisions made with context and rationale
-   - Record action items with owners and deadlines
-   - Note questions raised and answers given
-   - Track blockers and concerns
-   - Keep a "parking lot" for off-topic items
+**Capture as you go:**
+- "Let me add that decision..."
+- "Who's taking that action item?"
+- "Did I capture that correctly?"
+- "Any other points on this topic?"
 
-   **End of Meeting**
-   - Summarize key takeaways
-   - Review action items to ensure clarity
-   - Plan next meeting if needed
+### 3. Update the Document in Real-Time
 
-4. **Structure action items clearly**
-   - Each action should have an owner
-   - Include deadlines or target dates
-   - Prioritize (high/medium/low)
-   - Make actions specific and measurable
+**Use the Edit tool throughout the meeting** to update notes:
+
+- Add discussion points as they happen
+- Capture decisions immediately
+- Document action items with owners
+- Note parking lot items
+- Keep it current, not comprehensive
+
+**Don't wait until the end** - document as the conversation happens.
+
+### 4. Continue Through the Meeting
+
+**Follow the natural flow of discussion.**
+
+- Don't force rigid agenda structure
+- Capture what's important
+- It's okay if topics jump around
+- Help track loose ends
+
+## Meeting Documentation
+
+Focus on these key elements:
+
+- **Decisions made** - What was decided?
+- **Action items** - Who's doing what by when?
+- **Key discussion points** - Main topics covered
+- **Parking lot** - Items for later
+- **Context** - Enough detail for later reference
 
 ## Best Practices
 
-- Start with agenda - know what to cover
-- Capture decisions with rationale, not just "what"
-- Assign clear owners to action items
-- Set realistic deadlines
-- Note dissenting opinions if relevant
-- Keep notes organized by agenda items
-- Use the parking lot for tangents
-- Review action items before closing
-- Distribute notes promptly after meeting
-
-## Meeting Types
-
-**Standup/Status**
-- Quick updates, blockers, plans
-- Keep it brief and focused
-
-**Planning**
-- Goals, requirements, approach
-- Break down into tasks
-- Estimate and prioritize
-
-**Retrospective**
-- What went well, what didn't
-- Action items for improvement
-- Blameless post-mortem culture
-
-**Review/Demo**
-- Show completed work
-- Gather feedback
-- Plan next steps
-
-## When Complete
-
-- Summarize key decisions and actions
-- Ensure all action items have owners and deadlines
-- Commit the meeting notes
-- Consider sharing notes with attendees
-- Create follow-up tasks if needed
-- Schedule next meeting if appropriate
+- **Capture, don't transcribe** - Key points, not verbatim
+- **Document during, not after** - Real-time notes
+- **Clarify ownership** - Who owns each action item?
+- **Be concise** - Future you needs essence, not details
+- **Ask if unclear** - Better to clarify now than guess
