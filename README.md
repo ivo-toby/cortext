@@ -23,7 +23,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/cortext.git
+git clone https://github.com/ivo-toby/cortext.git
 cd cortext
 
 # Install with uv (recommended)
