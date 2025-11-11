@@ -56,7 +56,7 @@ get_current_conversation_dir() {
 
     # Extract conversation ID from branch (e.g., conversation/001-topic -> 001-topic)
     local conv_id=$(echo "$branch_name" | sed 's|^conversation/||')
-    local conv_dir="${workspace_root}/../conversations/$(date +%Y-%m)/${conv_id}"
+    local conv_dir="${workspace_root}/../conversations/$(date +%Y-%m-%d)/${conv_id}"
 
     if [ ! -d "$conv_dir" ]; then
         mkdir -p "$conv_dir"

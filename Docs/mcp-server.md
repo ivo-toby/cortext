@@ -50,12 +50,14 @@ Search across conversations, notes, and research.
 **Parameters:**
 - `query` (required): Search query (supports regex)
 - `type` (optional): Filter by conversation type (brainstorm, debug, plan, learn, meeting, review, all)
-- `date_range` (optional): Filter by date (YYYY-MM format)
+- `date_range` (optional): Filter by date. Supports YYYY-MM (month) or YYYY-MM-DD (day) format
 - `limit` (optional): Maximum results (default: 10)
 
-**Example:**
+**Examples:**
 ```
 Search workspace for "authentication bug" in debug conversations
+Filter by specific day: date_range="2025-11-10"
+Filter by month: date_range="2025-11"
 ```
 
 ### 2. get_context

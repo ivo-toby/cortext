@@ -1324,7 +1324,7 @@ This is a Cortext workspace for AI-augmented knowledge work.
 - Cross-reference related conversations
 
 ## File Organization
-- Conversations in `conversations/YYYY-MM/###-type-topic/`
+- Conversations in `conversations/YYYY-MM-DD/###-type-topic/`
 - Each conversation has its own git branch
 - Templates in `.workspace/templates/`
 

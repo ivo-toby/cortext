@@ -5,6 +5,32 @@ All notable changes to Cortext will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+#### Breaking Changes
+- **Conversation Directory Structure**: Changed from `YYYY-MM/###-type-topic/` to `YYYY-MM-DD/###-type-topic/` format
+  - All new conversations now use day-level granularity
+  - Provides better chronological organization and easier navigation
+  - Old `YYYY-MM` format conversations remain accessible and searchable
+  - No migration required - formats coexist peacefully
+
+#### Bash Scripts
+- Updated all conversation creation scripts to use `YYYY-MM-DD` format
+  - `common.sh`, `brainstorm.sh`, `debug.sh`, `plan.sh`, `learn.sh`, `meeting.sh`, `review.sh`
+  - `workspace-status.sh` now shows both "Today" and "This month" statistics
+
+#### MCP Server
+- Enhanced `search_workspace` date_range parameter to support both formats:
+  - `YYYY-MM` format: searches all conversations from that month (backward compatible)
+  - `YYYY-MM-DD` format: searches only conversations from that specific day
+  - Glob patterns automatically match appropriate directory structures
+
+#### Documentation
+- Updated all references from `YYYY-MM` to `YYYY-MM-DD` format
+  - `openspec/project.md`, `templates/cursorrules`, `Docs/spec.md`, `Docs/mcp-server.md`
+
 ## [0.1.0] - 2025-11-10
 
 ### Added

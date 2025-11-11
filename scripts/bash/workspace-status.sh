@@ -35,11 +35,18 @@ if [ -d "$CONVERSATIONS_DIR" ]; then
     TOTAL_CONVS=$(find "$CONVERSATIONS_DIR" -mindepth 2 -maxdepth 2 -type d | wc -l)
     echo "  Total: ${TOTAL_CONVS}" >&2
 
-    # This month
+    # This day and month
+    CURRENT_DAY=$(date +%Y-%m-%d)
+    DAY_DIR="${CONVERSATIONS_DIR}/${CURRENT_DAY}"
+    if [ -d "$DAY_DIR" ]; then
+        DAY_CONVS=$(find "$DAY_DIR" -mindepth 1 -maxdepth 1 -type d | wc -l)
+        echo "  Today (${CURRENT_DAY}): ${DAY_CONVS}" >&2
+    fi
+
+    # Count this month (aggregate of all YYYY-MM-* directories)
     CURRENT_MONTH=$(date +%Y-%m)
-    MONTH_DIR="${CONVERSATIONS_DIR}/${CURRENT_MONTH}"
-    if [ -d "$MONTH_DIR" ]; then
-        MONTH_CONVS=$(find "$MONTH_DIR" -mindepth 1 -maxdepth 1 -type d | wc -l)
+    MONTH_CONVS=$(find "$CONVERSATIONS_DIR" -mindepth 1 -maxdepth 1 -type d -name "${CURRENT_MONTH}*" -exec find {} -mindepth 1 -maxdepth 1 -type d \; 2>/dev/null | wc -l)
+    if [ "$MONTH_CONVS" -gt 0 ]; then
         echo "  This month (${CURRENT_MONTH}): ${MONTH_CONVS}" >&2
     fi
 else

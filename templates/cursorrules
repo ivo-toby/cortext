@@ -5,7 +5,7 @@ This is a Cortext workspace for AI-augmented knowledge work.
 
 ## Workspace Structure
 - `.workspace/memory/constitution.md`: User's working principles and preferences
-- `conversations/`: All AI conversations organized by date (YYYY-MM/###-type-topic/)
+- `conversations/`: All AI conversations organized by date (YYYY-MM-DD/###-type-topic/)
 - `research/`: Formal research projects
 - `ideas/`: Unstructured ideation
 - `notes/`: Learning notes and references

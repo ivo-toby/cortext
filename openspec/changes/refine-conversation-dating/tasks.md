@@ -8,11 +8,11 @@
 
 ### Phase 1: Core Scripts Update
 
-- [ ] **Update `scripts/bash/common.sh`**
+- [x] **Update `scripts/bash/common.sh`**
   - Change `date +%Y-%m` to `date +%Y-%m-%d` in `get_current_conversation_dir()` function (line ~59)
   - Verify: Create test conversation and check directory structure
 
-- [ ] **Update conversation type scripts** (6 files)
+- [x] **Update conversation type scripts** (6 files)
   - `scripts/bash/brainstorm.sh` - Line 27: Change date format
   - `scripts/bash/debug.sh` - Line 27: Change date format
   - `scripts/bash/plan.sh` - Line 27: Change date format
@@ -21,7 +21,7 @@
   - `scripts/bash/review.sh` - Line 27: Change date format
   - Verify: Run each script and confirm `YYYY-MM-DD` directory created
 
-- [ ] **Update `scripts/bash/workspace-status.sh`**
+- [x] **Update `scripts/bash/workspace-status.sh`**
   - Line 39: Update `CURRENT_MONTH` to use `YYYY-MM-DD` pattern
   - Update display logic to show "This day" instead of "This month"
   - Consider showing "This month" as aggregate of all `YYYY-MM-*` folders
@@ -29,7 +29,7 @@
 
 ### Phase 2: MCP Server Update
 
-- [ ] **Update `src/cortext_mcp/server.py`**
+- [x] **Update `src/cortext_mcp/server.py`**
   - Line 69: Update description from "YYYY-MM format" to "YYYY-MM or YYYY-MM-DD format"
   - Update search logic to accept both `YYYY-MM` and `YYYY-MM-DD` patterns
   - Test `--glob` parameter with both formats
@@ -37,37 +37,37 @@
 
 ### Phase 3: Documentation Updates
 
-- [ ] **Update `openspec/project.md`**
+- [x] **Update `openspec/project.md`**
   - Line 196: Change `conversations/` comment from `YYYY-MM/###-type-topic/` to `YYYY-MM-DD/###-type-topic/`
   - Verify: Documentation is accurate
 
-- [ ] **Update `templates/cursorrules`**
+- [x] **Update `templates/cursorrules`**
   - Line 8: Change conversation directory format in structure description
   - Verify: Template is consistent with new format
 
-- [ ] **Update `Docs/spec.md`**
+- [x] **Update `Docs/spec.md`**
   - Line 458: Update example from `YYYY-MM` to `YYYY-MM-DD`
   - Line 1327: Update conversation path format
   - Line 986: Update example in common.sh function documentation
   - Line 1108: Update CONVERSATIONS_DIR example
   - Verify: All references updated
 
-- [ ] **Update `Docs/mcp-server.md`**
+- [x] **Update `Docs/mcp-server.md`**
   - Line 53: Change `date_range` description to mention both formats
   - Add example: `"2025-11-10"` alongside `"2025-11"`
   - Verify: Documentation shows backward compatibility
 
-- [ ] **Update `claude_commands/workspace_add.md`**
+- [x] **Update `claude_commands/workspace_add.md`**
   - Line 110: Update date format in generated script template
   - Verify: Custom conversation types use new format
 
-- [ ] **Update `Docs/user-guide.md`** (if exists)
+- [x] **Update `Docs/user-guide.md`** (if exists)
   - Search for `YYYY-MM` references and update to `YYYY-MM-DD`
   - Verify: User-facing docs are current
 
 ### Phase 4: Testing & Validation
 
-- [ ] **Manual Testing**
+- [x] **Manual Testing**
   - Create test workspace: `cortext init /tmp/test-workspace`
   - Run each conversation type script:
     - `./scripts/bash/brainstorm.sh "Test Topic"`
@@ -76,28 +76,28 @@
   - Verify conversation ID increments correctly within daily folders
   - Test workspace-status script shows correct information
 
-- [ ] **MCP Server Testing**
+- [x] **MCP Server Testing**
   - Test search with old format: `date_range: "2025-11"`
   - Test search with new format: `date_range: "2025-11-10"`
   - Verify both return results correctly
 
-- [ ] **Backward Compatibility Verification**
+- [x] **Backward Compatibility Verification**
   - Create workspace with old-format conversations
   - Verify search still finds old conversations
   - Verify status script counts both old and new formats
 
 ### Phase 5: Finalization
 
-- [ ] **Update CHANGELOG.md**
+- [x] **Update CHANGELOG.md**
   - Add breaking change notice
   - Document new directory format
   - Mention backward compatibility approach
 
-- [ ] **Update README.md**
+- [x] **Update README.md**
   - Update directory structure example (if present)
   - Note the change in Quick Start section
 
-- [ ] **Commit Changes**
+- [x] **Commit Changes**
   - Use conventional commit: `[breaking] Change conversation directories to daily granularity`
   - Include full description of change and migration notes
 
@@ -107,12 +107,12 @@
 
 Before marking complete:
 
-- [ ] All bash scripts updated and tested
-- [ ] MCP server accepts both date formats
-- [ ] Documentation fully updated
-- [ ] Manual testing passed for all conversation types
-- [ ] No regressions in existing functionality
-- [ ] Git commit includes all changes atomically
+- [x] All bash scripts updated and tested
+- [x] MCP server accepts both date formats
+- [x] Documentation fully updated
+- [x] Manual testing passed for all conversation types
+- [x] No regressions in existing functionality
+- [x] Git commit includes all changes atomically
 
 ---
 

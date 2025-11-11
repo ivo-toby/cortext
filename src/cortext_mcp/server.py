@@ -66,7 +66,7 @@ class CortextMCPServer:
                             },
                             "date_range": {
                                 "type": "string",
-                                "description": "Filter by date range (YYYY-MM format, e.g., '2025-11')",
+                                "description": "Filter by date range. Supports YYYY-MM (month) or YYYY-MM-DD (day) format. Examples: '2025-11' or '2025-11-10'",
                             },
                             "limit": {
                                 "type": "number",
@@ -153,7 +153,13 @@ class CortextMCPServer:
 
         # Filter by date range if specified
         if date_range:
-            rg_cmd.extend(["--glob", f"{date_range}/**"])
+            # Support both YYYY-MM and YYYY-MM-DD formats
+            # YYYY-MM format: match YYYY-MM/ and YYYY-MM-DD/ directories
+            # YYYY-MM-DD format: match only YYYY-MM-DD/ directory
+            if len(date_range) == 7:  # YYYY-MM format
+                rg_cmd.extend(["--glob", f"{date_range}*/**"])
+            else:  # YYYY-MM-DD format
+                rg_cmd.extend(["--glob", f"{date_range}/**"])
 
         rg_cmd.append(search_path)
 
