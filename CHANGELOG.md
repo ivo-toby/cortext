@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Conversation Folder Organization
+- **Type-based subfolder structure**: Conversations now organized by type under `conversations/`
+  - Each conversation type has its own subfolder: `conversations/{type}/YYYY-MM-DD/###-type-topic/`
+  - Default mappings: `brainstorm/`, `debug/`, `learn/`, `meeting/`, `plan/`, `review/`
+  - Custom types automatically use their type name as folder name
+  - Provides clear separation between different domains of work
+  - Reduces cognitive load with intuitive type-name = folder-name convention
+
+#### Registry System Enhancement
+- Added `folder` field to conversation type registry entries
+  - Specifies the base folder path for each conversation type
+  - Configurable per-type in `.workspace/registry.json`
+  - Defaults to `conversations/{type-name}` if not specified or registry unavailable
+
+#### Bash Utilities
+- Added `get_conversation_folder()` function to `common.sh`
+  - Reads folder path from registry using `jq`
+  - Falls back to `conversations/{type}` if registry unavailable
+  - Ensures consistent folder resolution across all scripts
+
+### Changed
+
+#### Bash Scripts
+- Updated all conversation creation scripts to use registry-based folder resolution
+  - `brainstorm.sh`, `debug.sh`, `plan.sh`, `learn.sh`, `meeting.sh`, `review.sh`
+  - Now call `get_conversation_folder()` to determine save location
+  - Maintains backward compatibility with old flat structure
+- Updated `workspace-status.sh` to aggregate across all type subfolders
+  - Correctly counts conversations at depth 3 (type/date/conversation)
+  - Shows total, today, and monthly statistics across all folders
+
+#### MCP Server
+- Enhanced conversation name extraction to support both old and new structures
+  - New: `conversations/{type}/YYYY-MM-DD/###-name/` (depth i+3)
+  - Old: `conversations/YYYY-MM-DD/###-name/` (depth i+2)
+  - Automatically detects and handles both formats
+
+#### Custom Conversation Type Creation
+- Updated `workspace_add.md` to include `folder` field in registry entries
+  - Generated bash scripts use `get_conversation_folder()` for dynamic resolution
+  - Custom types default to `conversations/{custom-type-name}/`
+
+#### Documentation
+- Updated directory structure examples in README, project.md, and spec.md
+- Changed from flat `conversations/YYYY-MM-DD/` to organized `conversations/{type}/YYYY-MM-DD/`
+- Added explanation of folder configuration and customization options
+
+### Migration Notes
+- **No migration required**: Old and new structures coexist peacefully
+- Old conversations in `conversations/YYYY-MM-DD/` remain accessible
+- New conversations automatically use type-based subfolder structure
+- MCP server searches and finds conversations in both formats
+- Workspace status correctly counts across both formats
+
+---
+
+## [Previous Releases]
+
 ### Changed
 
 #### Breaking Changes

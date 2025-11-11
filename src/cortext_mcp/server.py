@@ -181,11 +181,17 @@ class CortextMCPServer:
                         line_text = match_data.get("lines", {}).get("text", "").strip()
 
                         # Extract conversation name from path
+                        # New structure: conversations/{type}/YYYY-MM-DD/###-name/file.md
+                        # Old structure: conversations/YYYY-MM-DD/###-name/file.md
                         path_parts = Path(path).parts
                         conv_name = "unknown"
                         for i, part in enumerate(path_parts):
-                            if part == "conversations" and i + 2 < len(path_parts):
-                                conv_name = path_parts[i + 2]
+                            if part == "conversations":
+                                # Try new structure first (i+3), fall back to old (i+2)
+                                if i + 3 < len(path_parts):
+                                    conv_name = path_parts[i + 3]
+                                elif i + 2 < len(path_parts):
+                                    conv_name = path_parts[i + 2]
                                 break
 
                         matches.append(

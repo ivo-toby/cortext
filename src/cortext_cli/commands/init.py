@@ -289,6 +289,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
         "conversation_types": {
             "brainstorm": {
                 "name": "Brainstorm",
+                "folder": "conversations/brainstorm",
                 "template": ".workspace/templates/brainstorm.md",
                 "command": "/workspace.brainstorm",
                 "script": ".workspace/scripts/bash/brainstorm.sh",
@@ -299,6 +300,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "debug": {
                 "name": "Debug",
+                "folder": "conversations/debug",
                 "template": ".workspace/templates/debug-session.md",
                 "command": "/workspace.debug",
                 "script": ".workspace/scripts/bash/debug.sh",
@@ -309,6 +311,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "plan": {
                 "name": "Plan",
+                "folder": "conversations/plan",
                 "template": ".workspace/templates/feature-planning.md",
                 "command": "/workspace.plan",
                 "script": ".workspace/scripts/bash/plan.sh",
@@ -319,6 +322,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "learn": {
                 "name": "Learn",
+                "folder": "conversations/learn",
                 "template": ".workspace/templates/learning-notes.md",
                 "command": "/workspace.learn",
                 "script": ".workspace/scripts/bash/learn.sh",
@@ -329,6 +333,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "meeting": {
                 "name": "Meeting",
+                "folder": "conversations/meeting",
                 "template": ".workspace/templates/meeting-notes.md",
                 "command": "/workspace.meeting",
                 "script": ".workspace/scripts/bash/meeting.sh",
@@ -339,6 +344,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "review": {
                 "name": "Review",
+                "folder": "conversations/review",
                 "template": ".workspace/templates/review-template.md",
                 "command": "/workspace.review",
                 "script": ".workspace/scripts/bash/review.sh",

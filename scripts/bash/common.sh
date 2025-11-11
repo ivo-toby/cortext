@@ -43,6 +43,22 @@ get_workspace_root() {
     fi
 }
 
+# Get conversation folder from registry
+get_conversation_folder() {
+    local conv_type="$1"
+    local workspace_root=$(get_workspace_root)
+    local registry_file="${workspace_root}/registry.json"
+
+    # Try to read folder from registry
+    if [ -f "$registry_file" ]; then
+        local folder=$(jq -r ".conversation_types.\"${conv_type}\".folder // \"conversations/${conv_type}\"" "$registry_file" 2>/dev/null)
+        echo "$folder"
+    else
+        # Fallback to type-based folder
+        echo "conversations/${conv_type}"
+    fi
+}
+
 # Get current conversation from git branch
 get_current_conversation_dir() {
     local workspace_root=$(get_workspace_root)
@@ -141,6 +157,7 @@ export -f print_warning
 export -f print_info
 export -f print_step
 export -f get_workspace_root
+export -f get_conversation_folder
 export -f get_current_conversation_dir
 export -f get_next_id
 export -f copy_template

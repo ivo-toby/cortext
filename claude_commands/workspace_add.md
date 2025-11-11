@@ -107,7 +107,8 @@ check_git_initialized
 
 # Get next conversation ID
 WORKSPACE_ROOT=$(get_workspace_root)
-CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../conversations/$(date +%Y-%m-%d)"
+FOLDER=$(get_conversation_folder "{type_name}")
+CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../${FOLDER}/$(date +%Y-%m-%d)"
 mkdir -p "$CONVERSATIONS_DIR"
 
 CONVERSATION_ID=$(get_next_id "$CONVERSATIONS_DIR")
@@ -208,6 +209,7 @@ Add the new type to `.workspace/registry.json`:
 ```json
 "{type_name}": {
   "name": "{Type Name}",
+  "folder": "conversations/{type_name}",
   "template": ".workspace/templates/{type_name}.md",
   "command": "/workspace.{type_name}",
   "script": ".workspace/scripts/bash/{type_name}.sh",

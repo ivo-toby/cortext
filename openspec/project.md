@@ -193,7 +193,7 @@ workspace/
 │   ├── scripts/            # Automation scripts
 │   ├── templates/          # Conversation templates
 │   └── registry.json       # Conversation type registry
-├── conversations/          # All conversations (YYYY-MM-DD/###-type-topic/)
+├── conversations/          # All conversations organized by type ({type}/YYYY-MM-DD/###-type-topic/)
 ├── .claude/               # Claude Code configuration
 ├── .cursorrules          # Cursor configuration
 ├── .opencode/            # OpenCode configuration

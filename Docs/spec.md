@@ -110,15 +110,19 @@ Create a centralized, git-backed workspace for AI-assisted knowledge work that p
 │   │   └── workspace_review.md
 │   └── hooks/
 │       └── post-conversation.sh
-├── conversations/                 # All AI conversations organized by date
-│   ├── 2025-11/
-│   │   ├── 001-feature-planning/
-│   │   │   ├── conversation.md
-│   │   │   ├── decisions.md
-│   │   │   └── artifacts/
-│   │   ├── 002-debugging-session/
-│   │   └── 003-brainstorm-architecture/
-│   └── 2025-12/
+├── conversations/                 # All AI conversations organized by type
+│   ├── plan/                     # Planning conversations
+│   │   └── 2025-11-10/
+│   │       └── 001-plan-feature-planning/
+│   │           ├── conversation.md
+│   │           ├── decisions.md
+│   │           └── artifacts/
+│   ├── debug/                    # Debug conversations
+│   │   └── 2025-11-10/
+│   │       └── 001-debug-session/
+│   └── brainstorm/               # Brainstorm conversations
+│       └── 2025-11-10/
+│           └── 001-brainstorm-architecture/
 ├── research/                      # Formal research projects (ResearchKit)
 │   ├── 001-ai-safety/
 │   │   ├── plan.md
@@ -455,7 +459,7 @@ Users can create custom conversation types beyond the built-in ones (brainstorm,
       - Project name
       - Category (woodworking, electronics, crafts, etc.)
       - Current status
-   3. Create a new conversation in `conversations/{YYYY-MM}/###-hobby-{project-name}/`
+   3. Create a new conversation in `conversations/hobby/{YYYY-MM-DD}/###-hobby-{project-name}/`
    4. Use the template to create `project.md`
    5. Create `gallery/` folder for images
    6. Create git branch: `hobby/###-{project-name}`
@@ -983,7 +987,7 @@ get_current_conversation_dir() {
 
     # Extract conversation ID from branch (e.g., conversation/001-topic -> 001-topic)
     local conv_id=$(echo "$branch_name" | sed 's|^conversation/||')
-    local conv_dir="${workspace_root}/../conversations/$(date +%Y-%m)/${conv_id}"
+    local conv_dir="${workspace_root}/../conversations/$(date +%Y-%m-%d)/${conv_id}"
 
     if [ ! -d "$conv_dir" ]; then
         mkdir -p "$conv_dir"
@@ -1105,7 +1109,8 @@ check_git_initialized
 
 # Get next conversation ID
 WORKSPACE_ROOT=$(get_workspace_root)
-CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../conversations/$(date +%Y-%m)"
+FOLDER=$(get_conversation_folder "brainstorm")
+CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../${FOLDER}/$(date +%Y-%m-%d)"
 mkdir -p "$CONVERSATIONS_DIR"
 
 CONVERSATION_ID=$(get_next_id "$CONVERSATIONS_DIR")
@@ -1312,7 +1317,7 @@ This is a Cortext workspace for AI-augmented knowledge work.
 
 ## Workspace Structure
 - `.workspace/memory/constitution.md`: User's working principles
-- `conversations/`: All AI conversations organized by date
+- `conversations/`: All AI conversations organized by type
 - `research/`: Formal research projects
 - `ideas/`: Unstructured ideation
 - `notes/`: Learning notes
@@ -1324,7 +1329,7 @@ This is a Cortext workspace for AI-augmented knowledge work.
 - Cross-reference related conversations
 
 ## File Organization
-- Conversations in `conversations/YYYY-MM-DD/###-type-topic/`
+- Conversations in `conversations/{type}/YYYY-MM-DD/###-type-topic/`
 - Each conversation has its own git branch
 - Templates in `.workspace/templates/`
 
@@ -1348,7 +1353,7 @@ Your role:
 
 Key files:
 - constitution.md: User's working principles and preferences
-- conversations/: All conversations organized chronologically
+- conversations/: All conversations organized by type and date
 - registry.json: Tracks conversation types and metadata
 
 When helping:
