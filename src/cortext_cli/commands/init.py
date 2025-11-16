@@ -28,16 +28,75 @@ from cortext_cli.utils import (
 console = Console()
 
 
+def is_path_like(value: str) -> bool:
+    """Check if a value looks like a filesystem path rather than a simple name.
+
+    Returns True for paths like: '.', '..', '/foo', '~/bar', './baz', '../qux'
+    Returns False for simple names like: 'myworkspace', 'ai-project'
+    """
+    # Check for path-like patterns
+    if value.startswith('.') or value.startswith('/') or value.startswith('~'):
+        return True
+    if '/' in value:
+        return True
+    return False
+
+
+def prompt_for_location() -> Path:
+    """Interactively prompt user for workspace location.
+
+    Offers choices:
+    - Current directory
+    - Default location (~/ai-workspace)
+    - Custom path
+    """
+    cwd = Path.cwd()
+
+    console.print("\n[cyan]Where would you like to create the workspace?[/cyan]\n")
+    console.print(f"  [dim]1.[/dim] Current directory: [green]{cwd}[/green]")
+    console.print(f"  [dim]2.[/dim] Default location: [green]~/ai-workspace[/green]")
+    console.print(f"  [dim]3.[/dim] Custom path")
+
+    choice = Prompt.ask(
+        "\nSelect option",
+        choices=["1", "2", "3"],
+        default="1"
+    )
+
+    if choice == "1":
+        return cwd
+    elif choice == "2":
+        return Path.home() / "ai-workspace"
+    else:  # choice == "3"
+        while True:
+            custom_path = Prompt.ask("Enter custom path")
+            if custom_path.strip():
+                path = Path(custom_path).expanduser().resolve()
+                return path
+            console.print("[yellow]Please enter a valid path[/yellow]")
+
+
 def init(
-    workspace_name: Optional[str] = typer.Argument(None, help="Name for the workspace"),
+    workspace_name: Optional[str] = typer.Argument(
+        None, help="Path or name for the workspace (e.g., '.', '/path/to/workspace', or 'myworkspace')"
+    ),
     ai: str = typer.Option(
         "claude", help="AI tool to configure (claude, opencode, gemini, all)"
     ),
     path: Optional[str] = typer.Option(
-        None, help="Path for workspace (default: ~/ai-workspace)"
+        None, help="Explicit path for workspace (takes precedence over positional argument)"
     ),
 ):
-    """Initialize a new Cortext workspace."""
+    """Initialize a new Cortext workspace.
+
+    Examples:
+        cortext init              # Interactive prompt for location
+        cortext init .            # Initialize in current directory
+        cortext init ..           # Initialize in parent directory
+        cortext init ~/mywork     # Initialize in home-relative path
+        cortext init /opt/ai      # Initialize in absolute path
+        cortext init myworkspace  # Initialize in ~/myworkspace (backward compat)
+    """
     console.print(
         Panel.fit(
             "[bold cyan]🧠 Cortext Workspace Initialization[/bold cyan]",
@@ -47,11 +106,19 @@ def init(
 
     # Determine workspace path
     if path:
+        # Explicit --path option takes precedence
         workspace_dir = Path(path).expanduser().resolve()
     elif workspace_name:
-        workspace_dir = Path.home() / workspace_name
+        # Check if it looks like a path or a simple name
+        if is_path_like(workspace_name):
+            # Treat as filesystem path
+            workspace_dir = Path(workspace_name).expanduser().resolve()
+        else:
+            # Treat as name appended to home (backward compatible)
+            workspace_dir = Path.home() / workspace_name
     else:
-        workspace_dir = Path.home() / "ai-workspace"
+        # No arguments - prompt user for location
+        workspace_dir = prompt_for_location()
 
     # Check if directory exists
     if workspace_dir.exists() and any(workspace_dir.iterdir()):

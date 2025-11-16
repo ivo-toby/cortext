@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### Init Command Path Handling
+- **Fixed `cortext init .`** now correctly initializes in current directory instead of home directory
+- **Added interactive prompt** when no arguments provided - users now explicitly choose workspace location
+- **Smart path detection**: Arguments containing `.`, `/`, or `~` are treated as filesystem paths
+  - `cortext init .` → current directory
+  - `cortext init ..` → parent directory
+  - `cortext init /opt/workspace` → absolute path
+  - `cortext init ~/projects/ai` → home-relative path
+  - `cortext init ./subdir` → relative path
+- **Backward compatible**: Simple names still create `~/name`
+  - `cortext init myworkspace` → `~/myworkspace`
+- **Interactive options** when running `cortext init`:
+  1. Current directory (with path shown)
+  2. Default location (`~/ai-workspace`)
+  3. Custom path (user input)
+- **Improved help text** with usage examples in `cortext init --help`
+
 ### Changed
 
 #### Conversation Workflows Redesign

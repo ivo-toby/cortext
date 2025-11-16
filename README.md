@@ -39,8 +39,17 @@ cortext check
 ### Initialize Your Workspace
 
 ```bash
-# Create a new workspace
+# Interactive prompt - choose where to create workspace
+cortext init
+
+# Initialize in current directory
+cortext init .
+
+# Initialize in a specific path
 cortext init ~/my-workspace
+
+# Initialize with a simple name (creates ~/my-workspace)
+cortext init my-workspace
 
 # Navigate to your workspace
 cd ~/my-workspace
