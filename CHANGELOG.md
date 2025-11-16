@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### **BREAKING**: Conversation Type Folder Structure
+- **Top-level type folders**: Each conversation type now has its own folder at workspace root
+  - OLD: `conversations/meeting/YYYY-MM-DD/###-name/`
+  - NEW: `meeting/YYYY-MM-DD/###-name/`
+- **Cleaner organization**: No more nested `conversations/` parent folder
+  - `brainstorm/` - Brainstorm conversations
+  - `debug/` - Debug conversations
+  - `learn/` - Learning notes
+  - `meeting/` - Meeting notes
+  - `plan/` - Planning sessions
+  - `review/` - Code reviews
+- **Pre-created at init**: All type folders created during `cortext init`
+- **Git-tracked**: Each folder contains `.gitkeep` for empty folder tracking
+- **Registry updated**: Folder paths now use type name directly (e.g., `"meeting"` not `"conversations/meeting"`)
+- **MCP server updated**: Searches in top-level type folders
+- **Custom types**: Now create top-level folders at workspace root
+
+#### Migration Notes
+- **New workspaces**: Will use new top-level structure automatically
+- **Existing workspaces**: Old `conversations/{type}/` structure still works
+- **MCP server**: Supports both old and new structures for backward compatibility
+- **Recommendation**: New workspaces should use new structure; existing workspaces can migrate manually if desired
+
 ### Fixed
 
 #### Init Command Path Handling

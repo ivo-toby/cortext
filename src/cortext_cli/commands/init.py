@@ -157,7 +157,10 @@ def init(
         configure_ai_tools(workspace_dir, ai, tracker)
 
         # Create initial registry
-        create_registry(workspace_dir, tracker)
+        registry = create_registry(workspace_dir, tracker)
+
+        # Create conversation type folders based on registry
+        create_conversation_type_folders(workspace_dir, registry, tracker)
 
         # Create initial constitution
         create_constitution(workspace_dir, tracker)
@@ -218,7 +221,6 @@ def create_workspace_structure(workspace_dir: Path, tracker: StepTracker):
         workspace_config / "scripts" / "powershell",
         workspace_config / "templates",
         workspace_config / "exports",
-        workspace_dir / "conversations",
         workspace_dir / "research",
         workspace_dir / "ideas",
         workspace_dir / "notes",
@@ -356,7 +358,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
         "conversation_types": {
             "brainstorm": {
                 "name": "Brainstorm",
-                "folder": "conversations/brainstorm",
+                "folder": "brainstorm",
                 "template": ".workspace/templates/brainstorm.md",
                 "command": "/workspace.brainstorm",
                 "script": ".workspace/scripts/bash/brainstorm.sh",
@@ -367,7 +369,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "debug": {
                 "name": "Debug",
-                "folder": "conversations/debug",
+                "folder": "debug",
                 "template": ".workspace/templates/debug-session.md",
                 "command": "/workspace.debug",
                 "script": ".workspace/scripts/bash/debug.sh",
@@ -378,7 +380,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "plan": {
                 "name": "Plan",
-                "folder": "conversations/plan",
+                "folder": "plan",
                 "template": ".workspace/templates/feature-planning.md",
                 "command": "/workspace.plan",
                 "script": ".workspace/scripts/bash/plan.sh",
@@ -389,7 +391,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "learn": {
                 "name": "Learn",
-                "folder": "conversations/learn",
+                "folder": "learn",
                 "template": ".workspace/templates/learning-notes.md",
                 "command": "/workspace.learn",
                 "script": ".workspace/scripts/bash/learn.sh",
@@ -400,7 +402,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "meeting": {
                 "name": "Meeting",
-                "folder": "conversations/meeting",
+                "folder": "meeting",
                 "template": ".workspace/templates/meeting-notes.md",
                 "command": "/workspace.meeting",
                 "script": ".workspace/scripts/bash/meeting.sh",
@@ -411,7 +413,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
             },
             "review": {
                 "name": "Review",
-                "folder": "conversations/review",
+                "folder": "review",
                 "template": ".workspace/templates/review-template.md",
                 "command": "/workspace.review",
                 "script": ".workspace/scripts/bash/review.sh",
@@ -426,6 +428,38 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
 
     registry_path.write_text(json.dumps(registry, indent=2))
     tracker.add_step("Created conversation type registry")
+
+    return registry
+
+
+def create_conversation_type_folders(
+    workspace_dir: Path, registry: dict, tracker: StepTracker
+):
+    """Create folders for each conversation type defined in the registry."""
+    conversation_types = registry.get("conversation_types", {})
+    folders_created = 0
+
+    for type_name, type_config in conversation_types.items():
+        folder_path = type_config.get("folder", type_name)
+        full_path = workspace_dir / folder_path
+
+        try:
+            # Create the folder
+            full_path.mkdir(parents=True, exist_ok=True)
+
+            # Add .gitkeep file so git tracks the empty folder
+            gitkeep_path = full_path / ".gitkeep"
+            if not gitkeep_path.exists():
+                gitkeep_path.touch()
+
+            folders_created += 1
+        except Exception as e:
+            tracker.add_warning(f"Could not create folder {folder_path}: {e}")
+
+    if folders_created > 0:
+        tracker.add_step(f"Created {folders_created} conversation type folders")
+    else:
+        tracker.add_info("No conversation type folders created")
 
 
 def create_constitution(workspace_dir: Path, tracker: StepTracker):

@@ -13,8 +13,9 @@ class CortextMCPServer:
 
     def __init__(self, workspace_path: Path = None):
         self.workspace_path = workspace_path or Path.cwd()
-        self.conversations_dir = self.workspace_path / "conversations"
         self.registry_path = self.workspace_path / ".workspace" / "registry.json"
+        # Load conversation types from registry for folder discovery
+        self.conversation_types = self._load_conversation_types()
 
     def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle incoming MCP request."""
@@ -44,6 +45,37 @@ class CortextMCPServer:
                 "tools": {},
             },
         }
+
+    def _load_conversation_types(self) -> dict[str, str]:
+        """Load conversation types and their folders from registry."""
+        if not self.registry_path.exists():
+            # Default types if registry doesn't exist
+            return {
+                "brainstorm": "brainstorm",
+                "debug": "debug",
+                "learn": "learn",
+                "meeting": "meeting",
+                "plan": "plan",
+                "review": "review",
+            }
+
+        try:
+            with open(self.registry_path) as f:
+                registry = json.load(f)
+            types = {}
+            for type_name, type_config in registry.get("conversation_types", {}).items():
+                types[type_name] = type_config.get("folder", type_name)
+            return types
+        except Exception:
+            # Fallback to defaults
+            return {
+                "brainstorm": "brainstorm",
+                "debug": "debug",
+                "learn": "learn",
+                "meeting": "meeting",
+                "plan": "plan",
+                "review": "review",
+            }
 
     def list_tools(self) -> dict[str, Any]:
         """List available tools."""
@@ -132,24 +164,33 @@ class CortextMCPServer:
         limit: int = 10,
     ) -> dict[str, Any]:
         """Search across workspace using ripgrep."""
-        if not self.conversations_dir.exists():
+        # Check if any conversation type folders exist
+        search_paths = []
+        if type == "all":
+            # Search all known type folders
+            for type_name, folder in self.conversation_types.items():
+                folder_path = self.workspace_path / folder
+                if folder_path.exists():
+                    search_paths.append(str(folder_path))
+        else:
+            # Search specific type folder
+            folder = self.conversation_types.get(type, type)
+            folder_path = self.workspace_path / folder
+            if folder_path.exists():
+                search_paths.append(str(folder_path))
+
+        if not search_paths:
             return {
                 "content": [
                     {
                         "type": "text",
-                        "text": "No conversations directory found. Have you created any conversations yet?",
+                        "text": "No conversation folders found. Have you created any conversations yet?",
                     }
                 ]
             }
 
         # Build ripgrep command
         rg_cmd = ["rg", "--json", "-i", query]
-
-        # Filter by type if specified
-        search_path = str(self.conversations_dir)
-        if type != "all":
-            # Search within specific conversation type directories
-            rg_cmd.extend(["--glob", f"*-{type}-*/**"])
 
         # Filter by date range if specified
         if date_range:
@@ -161,7 +202,8 @@ class CortextMCPServer:
             else:  # YYYY-MM-DD format
                 rg_cmd.extend(["--glob", f"{date_range}/**"])
 
-        rg_cmd.append(search_path)
+        # Add all search paths
+        rg_cmd.extend(search_paths)
 
         try:
             result = subprocess.run(
@@ -181,13 +223,20 @@ class CortextMCPServer:
                         line_text = match_data.get("lines", {}).get("text", "").strip()
 
                         # Extract conversation name from path
-                        # New structure: conversations/{type}/YYYY-MM-DD/###-name/file.md
-                        # Old structure: conversations/YYYY-MM-DD/###-name/file.md
+                        # Structure: {type}/YYYY-MM-DD/###-name/file.md
+                        # The conversation name is the directory containing the file
                         path_parts = Path(path).parts
                         conv_name = "unknown"
+                        # Look for conversation type folder at workspace root
                         for i, part in enumerate(path_parts):
+                            if part in self.conversation_types.values():
+                                # Found type folder, conversation name is at i+2
+                                # {type}/YYYY-MM-DD/###-name/
+                                if i + 2 < len(path_parts):
+                                    conv_name = path_parts[i + 2]
+                                break
+                            # Also support old structure: conversations/{type}/YYYY-MM-DD/###-name/
                             if part == "conversations":
-                                # Try new structure first (i+3), fall back to old (i+2)
                                 if i + 3 < len(path_parts):
                                     conv_name = path_parts[i + 3]
                                 elif i + 2 < len(path_parts):

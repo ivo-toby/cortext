@@ -90,20 +90,19 @@ Once your workspace is initialized, Claude Code will have access to conversation
 │   ├── scripts/            # Automation scripts
 │   ├── templates/          # Conversation templates
 │   └── registry.json       # Conversation type registry
-├── conversations/          # All conversations organized by type
-│   ├── brainstorm/        # Brainstorm conversations
-│   │   └── 2025-11-10/
-│   │       └── 001-brainstorm-new-feature/
-│   ├── debug/             # Debug conversations
-│   │   └── 2025-11-10/
-│   │       └── 001-debug-auth-issue/
-│   ├── learn/             # Learning notes
-│   ├── meeting/           # Meeting notes
-│   ├── plan/              # Planning sessions
-│   └── review/            # Code reviews
+├── brainstorm/             # Brainstorm conversations (top-level)
+│   └── 2025-11-10/
+│       └── 001-brainstorm-new-feature/
+├── debug/                  # Debug conversations
+│   └── 2025-11-10/
+│       └── 001-debug-auth-issue/
+├── learn/                  # Learning notes
+├── meeting/                # Meeting notes
+├── plan/                   # Planning sessions
+├── review/                 # Code reviews
 ├── research/               # Research projects
 ├── ideas/                  # Unstructured ideation
-├── notes/                  # Learning notes
+├── notes/                  # Personal notes
 └── projects/               # Active projects
 ```
 
