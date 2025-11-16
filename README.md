@@ -181,6 +181,48 @@ Optional:
 - ripgrep (for fast search in Phase 2)
 - tmux (for session management)
 
+### Testing Development Locally
+
+The easiest way to test changes during development is using an editable install:
+
+```bash
+# Option 1: Virtual environment (isolated)
+cd /path/to/cortext
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+# Test from anywhere (while venv is active)
+cd /tmp/test-workspace
+cortext init .
+```
+
+```bash
+# Option 2: Global install with pyenv (convenient)
+pip install -e /path/to/cortext
+
+# Now available everywhere
+cd /any/directory
+cortext init .
+```
+
+```bash
+# Option 3: Activate venv from anywhere
+source /path/to/cortext/.venv/bin/activate
+cortext init .
+```
+
+**With editable install (`-e`):**
+- Code changes are reflected immediately - no reinstall needed
+- Only reinstall if you change `pyproject.toml` (dependencies, entry points)
+- Run `cortext` directly to test your changes
+
+**Without venv (quick test):**
+```bash
+cd /path/to/cortext
+python3 -m cortext_cli.cli init .
+```
+
 ---
 
 ## 📋 Status
