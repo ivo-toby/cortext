@@ -8,7 +8,7 @@
 
 ### Phase 1: Fix Bug
 
-- [ ] **Update Gemini configuration to use source commands**
+- [x] **Update Gemini configuration to use source commands**
   - Change from `claude_dir` to `commands_dir` (source templates)
   - Remove dependency on Claude configuration
   - Remove `if claude_dir.exists()` check
@@ -16,25 +16,25 @@
 
 ### Phase 2: Testing
 
-- [ ] **Test `cortext init --ai=gemini`**
+- [x] **Test `cortext init --ai=gemini`**
   - Verify `.gemini/commands/` folder created
   - Verify TOML files generated
   - Verify no `.claude/` folder created
   - Verify: Standalone Gemini configuration works
 
-- [ ] **Test `cortext init --ai=all`**
+- [x] **Test `cortext init --ai=all`**
   - Verify all AI tools configured
   - Verify no regressions
   - Verify: All tools work correctly
 
 ### Phase 3: Finalization
 
-- [ ] **Update CHANGELOG**
+- [x] **Update CHANGELOG**
   - Document bug fix
   - Note independent tool configuration
   - Verify: Fix documented
 
-- [ ] **Commit changes**
+- [x] **Commit changes**
   - Use conventional commit format
   - Reference the bug
   - Verify: Clean commit
@@ -43,11 +43,11 @@
 
 ## Validation Checklist
 
-- [ ] `cortext init --ai=gemini` creates `.gemini/commands/`
-- [ ] Gemini TOML files generated correctly
-- [ ] No dependency on Claude configuration
-- [ ] `--ai=all` still works
-- [ ] Each AI tool independent
+- [x] `cortext init --ai=gemini` creates `.gemini/commands/`
+- [x] Gemini TOML files generated correctly
+- [x] No dependency on Claude configuration
+- [x] `--ai=all` still works
+- [x] Each AI tool independent
 
 ---
 

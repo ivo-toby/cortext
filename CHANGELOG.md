@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+#### Gemini CLI Independent Configuration
+- **Fixed `cortext init --ai=gemini` not creating `.gemini/` folder**
+  - Gemini configuration now converts directly from source command templates
+  - Removed dependency on Claude configuration existing first
+  - Each AI tool can now be configured independently
+  - `--ai=all` continues to work correctly
+
 ### Changed
 
 #### Conversation Workflows Redesign
