@@ -69,8 +69,8 @@ def prompt_for_location() -> Path:
         return Path.home() / "ai-workspace"
     else:  # choice == "3"
         while True:
-            custom_path = Prompt.ask("Enter custom path")
-            if custom_path.strip():
+            custom_path = Prompt.ask("Enter custom path").strip()
+            if custom_path:
                 path = Path(custom_path).expanduser().resolve()
                 return path
             console.print("[yellow]Please enter a valid path[/yellow]")
