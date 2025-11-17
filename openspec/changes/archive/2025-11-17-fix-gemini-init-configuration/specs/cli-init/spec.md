@@ -5,7 +5,7 @@
 
 ---
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Each AI tool SHALL be configurable independently
 The init command SHALL configure each AI tool independently without requiring other tools to be configured first. Each tool SHALL convert directly from source command templates.
