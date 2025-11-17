@@ -227,7 +227,7 @@ Add the new type to `.workspace/registry.json`:
 ```json
 "{type_name}": {
   "name": "{Type Name}",
-  "folder": "conversations/{type_name}",
+  "folder": "{type_name}",
   "template": ".workspace/templates/{type_name}.md",
   "command": "/workspace.{type_name}",
   "script": ".workspace/scripts/bash/{type_name}.sh",
@@ -237,6 +237,12 @@ Add the new type to `.workspace/registry.json`:
   "description": "{description}",
   "sections": [{sections}]
 }
+```
+
+**Important**: Also create the type folder at workspace root:
+```bash
+mkdir -p {type_name}
+touch {type_name}/.gitkeep
 ```
 
 ### Step 6: Commit Everything

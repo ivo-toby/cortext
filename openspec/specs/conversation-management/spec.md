@@ -1,12 +1,8 @@
-# Spec Delta: Conversation Management
+# conversation-management Specification
 
-**Capability:** conversation-management
-**Change ID:** refine-conversation-dating
-
----
-
-## MODIFIED Requirements
-
+## Purpose
+TBD - created by archiving change refine-conversation-dating. Update Purpose after archive.
+## Requirements
 ### Requirement: Conversation Directory Structure SHALL use day-level granularity
 The system MUST organize conversation directories by date with day-level granularity using the pattern `YYYY-MM-DD/###-type-topic/` to improve chronological navigation and organization.
 
@@ -90,8 +86,6 @@ CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../conversations/$(date +%Y-%m-%d)"
 
 ---
 
-## ADDED Requirements
-
 ### Requirement: Backward Compatibility SHALL support mixed date formats
 The system SHALL maintain backward compatibility by continuing to work with existing conversations in the old `YYYY-MM` format while creating all new conversations in the `YYYY-MM-DD` format.
 
@@ -137,57 +131,3 @@ The workspace status script SHALL provide enhanced temporal organization informa
 
 ---
 
-## Implementation Notes
-
-### Affected Files
-
-**Bash Scripts:**
-- `scripts/bash/common.sh` - Core utility function
-- `scripts/bash/brainstorm.sh` - Brainstorm conversations
-- `scripts/bash/debug.sh` - Debug sessions
-- `scripts/bash/plan.sh` - Planning sessions
-- `scripts/bash/learn.sh` - Learning notes
-- `scripts/bash/meeting.sh` - Meeting notes
-- `scripts/bash/review.sh` - Review sessions
-- `scripts/bash/workspace-status.sh` - Status display
-
-**Change Pattern:**
-```bash
-# OLD:
-CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../conversations/$(date +%Y-%m)"
-
-# NEW:
-CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../conversations/$(date +%Y-%m-%d)"
-```
-
-### Testing
-
-**Manual Tests:**
-1. Create conversation on specific date - verify directory is `YYYY-MM-DD`
-2. Create multiple conversations same day - verify IDs increment
-3. Create conversations across days - verify separate directories
-4. Run status script - verify counts and display
-5. Search old-format conversations - verify still found
-
-**Edge Cases:**
-- Conversation created at midnight (date boundary)
-- First conversation of the day
-- Last conversation of the month (month rollover)
-- Workspace with only old-format conversations
-- Workspace with only new-format conversations
-- Mixed format workspace
-
----
-
-## Migration Notes
-
-**User Impact:**
-- **Forward-only migration**: New conversations use new format
-- **No data loss**: Old conversations remain accessible
-- **No manual intervention required**: Change is transparent to users
-- **Optional cleanup**: Users may manually reorganize old conversations if desired (not recommended)
-
-**Future Enhancements:**
-- Migration tool to convert old → new format (if users request)
-- Configuration option to choose date granularity
-- Support for custom date formats via configuration

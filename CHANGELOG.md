@@ -9,6 +9,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### **BREAKING**: Conversation Type Folder Structure
+- **Top-level type folders**: Each conversation type now has its own folder at workspace root
+  - OLD: `conversations/meeting/YYYY-MM-DD/###-name/`
+  - NEW: `meeting/YYYY-MM-DD/###-name/`
+- **Cleaner organization**: No more nested `conversations/` parent folder
+  - `brainstorm/` - Brainstorm conversations
+  - `debug/` - Debug conversations
+  - `learn/` - Learning notes
+  - `meeting/` - Meeting notes
+  - `plan/` - Planning sessions
+  - `review/` - Code reviews
+- **Pre-created at init**: All type folders created during `cortext init`
+- **Git-tracked**: Each folder contains `.gitkeep` for empty folder tracking
+- **Registry updated**: Folder paths now use type name directly (e.g., `"meeting"` not `"conversations/meeting"`)
+- **MCP server updated**: Searches in top-level type folders
+- **Custom types**: Now create top-level folders at workspace root
+
+#### Migration Notes
+- **New workspaces**: Will use new top-level structure automatically
+- **Existing workspaces**: Old `conversations/{type}/` structure still works
+- **MCP server**: Supports both old and new structures for backward compatibility
+- **Recommendation**: New workspaces should use new structure; existing workspaces can migrate manually if desired
+
+#### Code Quality
+- **Extracted default conversation types to constant**: `DEFAULT_CONVERSATION_TYPES` in MCP server
+  - Single source of truth for default types
+  - Eliminated duplicate dictionary definitions
+  - Improved maintainability
+
+### Fixed
+
+#### Init Command Path Handling
+- **Fixed `cortext init .`** now correctly initializes in current directory instead of home directory
+- **Added interactive prompt** when no arguments provided - users now explicitly choose workspace location
+- **Smart path detection**: Arguments containing `.`, `/`, or `~` are treated as filesystem paths
+  - `cortext init .` → current directory
+  - `cortext init ..` → parent directory
+  - `cortext init /opt/workspace` → absolute path
+  - `cortext init ~/projects/ai` → home-relative path
+  - `cortext init ./subdir` → relative path
+- **Backward compatible**: Simple names still create `~/name`
+  - `cortext init myworkspace` → `~/myworkspace`
+- **Interactive options** when running `cortext init`:
+  1. Current directory (with path shown)
+  2. Default location (`~/ai-workspace`)
+  3. Custom path (user input)
+- **Improved help text** with usage examples in `cortext init --help`
+
+### Changed
+
 #### Conversation Workflows Redesign
 - **Conversation-first approach**: Transformed all conversation workflows from template-filling to dialogue-based interaction
   - Conversations now emphasize ongoing dialogue with real-time documentation

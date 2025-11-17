@@ -193,7 +193,12 @@ workspace/
 │   ├── scripts/            # Automation scripts
 │   ├── templates/          # Conversation templates
 │   └── registry.json       # Conversation type registry
-├── conversations/          # All conversations organized by type ({type}/YYYY-MM-DD/###-type-topic/)
+├── brainstorm/             # Brainstorm conversations ({type}/YYYY-MM-DD/###-type-topic/)
+├── debug/                  # Debug conversations
+├── learn/                  # Learning notes
+├── meeting/                # Meeting notes
+├── plan/                   # Planning sessions
+├── review/                 # Code reviews
 ├── .claude/               # Claude Code configuration
 ├── .cursorrules          # Cursor configuration
 ├── .opencode/            # OpenCode configuration

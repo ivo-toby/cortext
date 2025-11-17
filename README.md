@@ -39,8 +39,17 @@ cortext check
 ### Initialize Your Workspace
 
 ```bash
-# Create a new workspace
+# Interactive prompt - choose where to create workspace
+cortext init
+
+# Initialize in current directory
+cortext init .
+
+# Initialize in a specific path
 cortext init ~/my-workspace
+
+# Initialize with a simple name (creates ~/my-workspace)
+cortext init my-workspace
 
 # Navigate to your workspace
 cd ~/my-workspace
@@ -81,20 +90,19 @@ Once your workspace is initialized, Claude Code will have access to conversation
 │   ├── scripts/            # Automation scripts
 │   ├── templates/          # Conversation templates
 │   └── registry.json       # Conversation type registry
-├── conversations/          # All conversations organized by type
-│   ├── brainstorm/        # Brainstorm conversations
-│   │   └── 2025-11-10/
-│   │       └── 001-brainstorm-new-feature/
-│   ├── debug/             # Debug conversations
-│   │   └── 2025-11-10/
-│   │       └── 001-debug-auth-issue/
-│   ├── learn/             # Learning notes
-│   ├── meeting/           # Meeting notes
-│   ├── plan/              # Planning sessions
-│   └── review/            # Code reviews
+├── brainstorm/             # Brainstorm conversations (top-level)
+│   └── 2025-11-10/
+│       └── 001-brainstorm-new-feature/
+├── debug/                  # Debug conversations
+│   └── 2025-11-10/
+│       └── 001-debug-auth-issue/
+├── learn/                  # Learning notes
+├── meeting/                # Meeting notes
+├── plan/                   # Planning sessions
+├── review/                 # Code reviews
 ├── research/               # Research projects
 ├── ideas/                  # Unstructured ideation
-├── notes/                  # Learning notes
+├── notes/                  # Personal notes
 └── projects/               # Active projects
 ```
 
@@ -171,6 +179,48 @@ Optional:
 - Ollama (for RAG features in Phase 4)
 - ripgrep (for fast search in Phase 2)
 - tmux (for session management)
+
+### Testing Development Locally
+
+The easiest way to test changes during development is using an editable install:
+
+```bash
+# Option 1: Virtual environment (isolated)
+cd /path/to/cortext
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+# Test from anywhere (while venv is active)
+cd /tmp/test-workspace
+cortext init .
+```
+
+```bash
+# Option 2: Global install with pyenv (convenient)
+pip install -e /path/to/cortext
+
+# Now available everywhere
+cd /any/directory
+cortext init .
+```
+
+```bash
+# Option 3: Activate venv from anywhere
+source /path/to/cortext/.venv/bin/activate
+cortext init .
+```
+
+**With editable install (`-e`):**
+- Code changes are reflected immediately - no reinstall needed
+- Only reinstall if you change `pyproject.toml` (dependencies, entry points)
+- Run `cortext` directly to test your changes
+
+**Without venv (quick test):**
+```bash
+cd /path/to/cortext
+python3 -m cortext_cli.cli init .
+```
 
 ---
 
