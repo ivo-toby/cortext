@@ -1,8 +1,9 @@
 # Cortext Implementation Tasks
 
-**Status**: Phase 0 - Foundation
+**Status**: Phases 0-3 Complete, Phase 4-5 Deferred
 **Started**: 2025-11-10
-**Next Review**: After Phase 0 completion
+**Last Review**: 2025-11-17
+**Next Review**: Before Phase 4 implementation
 
 ---
 
@@ -35,7 +36,7 @@
 ### Constitution System
 - [x] Create templates/constitution.md with example structure (integrated into init command)
 - [x] Create templates/context.md template (integrated into init command)
-- [ ] Create templates/preferences.md template
+- [x] Create templates/preferences.md template (integrated into constitution.md - includes working style, preferences sections)
 - [x] Create templates/decisions.md template (integrated into init command)
 
 ---
@@ -72,43 +73,43 @@
 
 ### Registry System
 - [x] Create templates/registry.json template (integrated into init command)
-- [ ] Implement register_conversation_type() function
-- [ ] Implement `cortext list` command to show conversation types
+- [x] Implement register_conversation_type() function (via create_registry() in init.py:349-430)
+- [x] Implement `cortext list` command to show conversation types (src/cortext_cli/commands/list.py)
 - [x] Create default registry with built-in types (integrated into init command)
 
 ### Git Workflow
-- [ ] Create scripts/bash/commit-session.sh
-- [ ] Create scripts/bash/workspace-status.sh
+- [x] Create scripts/bash/commit-session.sh
+- [x] Create scripts/bash/workspace-status.sh
 - [ ] Document git branch naming conventions
 - [ ] Document commit message format
 
 ### Extensible Conversation Types
-- [ ] Implement `/workspace.add` slash command
-- [ ] Create AI-guided template creation workflow
-- [ ] Implement template validation
-- [ ] Add conversation type to registry automatically
-- [ ] Create corresponding slash command automatically
-- [ ] Commit new conversation type to git
+- [x] Implement `/workspace.add` slash command (claude_commands/workspace_add.md)
+- [x] Create AI-guided template creation workflow (detailed in workspace_add.md)
+- [x] Implement template validation (built into workspace_add workflow)
+- [x] Add conversation type to registry automatically (Step 5 in workspace_add.md)
+- [x] Create corresponding slash command automatically (Step 4 in workspace_add.md)
+- [x] Commit new conversation type to git (Step 6 in workspace_add.md)
 
 ---
 
 ## Phase 2: MCP Server - Basic (Week 4-5)
 
 ### MCP Server Foundation
-- [ ] Create mcp-server/ directory structure
-- [ ] Set up MCP server package (Python)
-- [ ] Implement basic MCP protocol handler
-- [ ] Create server configuration
+- [x] Create mcp-server/ directory structure (src/cortext_mcp/)
+- [x] Set up MCP server package (Python) - entry point: cortext-mcp
+- [x] Implement basic MCP protocol handler (src/cortext_mcp/server.py)
+- [x] Create server configuration (pyproject.toml line 19)
 
 ### Search Implementation
-- [ ] Implement search_workspace tool (ripgrep wrapper)
-- [ ] Add keyword search across conversations
-- [ ] Add date range filtering
-- [ ] Add conversation type filtering
-- [ ] Implement result ranking
+- [x] Implement search_workspace tool (ripgrep wrapper) - server.py:156-288
+- [x] Add keyword search across conversations (regex support)
+- [x] Add date range filtering (YYYY-MM and YYYY-MM-DD formats)
+- [x] Add conversation type filtering (all types supported)
+- [x] Implement result ranking (basic - limited by count, ordered by search)
 
 ### Claude Code Integration
-- [ ] Create MCP server configuration for Claude
+- [x] Create MCP server configuration for Claude
 - [ ] Test search integration with Claude Code
 - [ ] Document MCP server usage
 
@@ -117,29 +118,33 @@
 - [ ] Implement incremental indexing
 - [ ] Add metadata extraction from conversations
 
+### Additional MCP Tools (Bonus)
+- [x] Implement get_context tool (server.py:290-300)
+- [x] Implement get_decision_history tool (server.py:302-331)
+
 ---
 
 ## Phase 3: Multi-AI Support (Week 6-7)
 
 ### OpenCode Configuration
-- [ ] Create .opencode/ configuration structure
-- [ ] Convert Claude commands to OpenCode format
+- [x] Create .opencode/ configuration structure (in init command)
+- [x] Convert Claude commands to OpenCode format (src/cortext_cli/converters.py:73-128)
 - [ ] Test with Ollama integration
 - [ ] Document OpenCode setup
 
 ### Gemini CLI Configuration
-- [ ] Create .gemini/ configuration structure
-- [ ] Convert commands to Gemini TOML format
-- [ ] Implement convert_md_to_toml() function
+- [x] Create .gemini/ configuration structure (in init command)
+- [x] Convert commands to Gemini TOML format (in init command)
+- [x] Implement convert_md_to_toml() function (src/cortext_cli/converters.py:6-70)
 - [ ] Document Gemini setup
 
 ### Cursor Configuration
-- [ ] Create .cursorrules template
+- [x] Create .cursorrules template (copied in init command)
 - [ ] Test Cursor integration
 - [ ] Document Cursor setup
 
 ### Tool-Agnostic Features
-- [ ] Update constitution to be tool-agnostic
+- [x] Update constitution to be tool-agnostic (constitution.md is generic)
 - [ ] Test workspace switching between tools
 - [ ] Create tool comparison documentation
 
@@ -182,7 +187,7 @@
 - [ ] Create export/import format (tar.gz)
 
 ### Analytics
-- [ ] Implement get_decision_history tool
+- [x] Implement get_decision_history tool (already in MCP server - server.py:302-331)
 - [ ] Add conversation statistics
 - [ ] Create trend analysis features
 - [ ] Implement timeline queries
@@ -252,10 +257,56 @@
 
 ---
 
+## Priority: Remaining Tasks
+
+### HIGH PRIORITY (Quick Wins)
+1. **Documentation gaps** - blocks adoption
+   - [ ] Document git branch naming conventions
+   - [ ] Document commit message format
+   - [ ] Document MCP server usage
+   - [ ] Document OpenCode setup
+   - [ ] Document Gemini setup
+   - [ ] Document Cursor setup
+   - [ ] Write user guide with examples
+   - [ ] Write contribution guide
+
+2. **Testing** - ensures stability
+   - [ ] Test search integration with Claude Code
+   - [ ] Test with Ollama integration (OpenCode)
+   - [ ] Test Cursor integration
+   - [ ] Test workspace switching between tools
+
+### MEDIUM PRIORITY (Polish Features)
+3. **Indexing system** - improves search performance
+   - [ ] Create scripts/bash/index-conversations.sh
+   - [ ] Implement incremental indexing
+   - [ ] Add metadata extraction from conversations
+
+4. **Package distribution** - enables wider adoption
+   - [ ] Finalize pyproject.toml
+   - [ ] Test installation with uv
+   - [ ] Test installation with pip
+   - [ ] Create GitHub releases
+
+### LOW PRIORITY (Future Enhancements)
+5. **Phase 4: RAG features** - requires Ollama setup
+   - All embedding/vector store features (deferred)
+
+6. **Phase 5: Advanced features** - nice-to-haves
+   - Template sharing (clone/export/import)
+   - Analytics and visualization
+   - Export features
+
+7. **Tmux integration** - optional productivity
+   - Session scripts, status bar, auto-commit hooks
+
+---
+
 ## Notes
 
-- Focus on Phase 0 first - get the foundation solid
-- Test each component before moving to next phase
+- Phases 0-3 are substantially complete
+- Focus on documentation and testing before Phase 4
+- RAG features (Phase 4) deferred until Ollama is set up
 - Keep commits atomic and use conventional commit messages
 - Document as you go
 - ResearchKit patterns are the reference implementation
