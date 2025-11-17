@@ -155,14 +155,11 @@ Commits are structured and searchable:
 [decision] Chose PostgreSQL over MongoDB for scalability
 ```
 
-### RAG Pipeline (Optional)
+### RAG Pipeline
 
-Semantic search across your workspace using local embeddings.
+Semantic search across your workspace using local embeddings (included by default).
 
 ```bash
-# Install RAG dependencies
-pip install cortext-workspace[rag]
-
 # Embed workspace for semantic search
 cortext embed --all
 
@@ -203,8 +200,7 @@ Contributions welcome! See the task list for areas needing work.
 - bash (for Unix systems)
 
 Optional:
-- Ollama (for RAG features in Phase 4)
-- ripgrep (for fast search in Phase 2)
+- ripgrep (for fast keyword search)
 - tmux (for session management)
 
 ### Testing Development Locally
@@ -257,8 +253,8 @@ python3 -m cortext_cli.cli init .
 - **Phase 1:** Templates, commands, registry ✅
 - **Phase 2:** MCP server with search ✅
 - **Phase 3:** Multi-AI tool support ✅
-- **Phase 4:** RAG with Ollama (deferred - requires setup)
-- **Phase 5:** Advanced features (deferred - polish phase)
+- **Phase 4:** RAG with local embeddings ✅
+- **Phase 5:** Advanced features (planned)
 - **Phase 6:** Documentation & release ✅
 
 **Current Status**: ✅ **Production Ready** - Core functionality complete and tested.
@@ -296,12 +292,12 @@ Inspired by:
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/cortext/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/cortext/discussions)
+- **Issues:** [GitHub Issues](https://github.com/ivo-toby/cortext/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/ivo-toby/cortext/discussions)
 - **Documentation:** See `Docs/` directory
 
 ---
 
 **Status:** 🚧 Active Development
 **Version:** 0.1.0
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-17
