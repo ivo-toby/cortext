@@ -251,8 +251,8 @@
 ### Phase 1: ✅ Complete (2025-11-10)
 ### Phase 2: ✅ Complete (2025-11-10) - MCP server with search
 ### Phase 3: ✅ Complete (2025-11-10) - Multi-AI support (Claude, Cursor, OpenCode, Gemini)
-### Phase 4: ⏳ Deferred - RAG with Ollama (requires Ollama setup)
-### Phase 5: ⏳ Deferred - Advanced features (template sharing, analytics)
+### Phase 4: ✅ Complete (2025-11-17) - RAG with fastembed (local embeddings, no PyTorch)
+### Phase 5: ⏳ Planned - Advanced features (template sharing, analytics)
 ### Phase 6: ✅ Complete (2025-11-10) - Documentation and core release ready
 
 ---
@@ -272,7 +272,7 @@
 
 2. **Testing** - ensures stability
    - [ ] Test search integration with Claude Code
-   - [ ] Test with Ollama integration (OpenCode)
+   - [ ] Test semantic search with RAG
    - [ ] Test Cursor integration
    - [ ] Test workspace switching between tools
 
@@ -289,10 +289,7 @@
    - [ ] Create GitHub releases
 
 ### LOW PRIORITY (Future Enhancements)
-5. **Phase 4: RAG features** - requires Ollama setup
-   - All embedding/vector store features (deferred)
-
-6. **Phase 5: Advanced features** - nice-to-haves
+5. **Phase 5: Advanced features** - nice-to-haves
    - Template sharing (clone/export/import)
    - Analytics and visualization
    - Export features
@@ -304,9 +301,9 @@
 
 ## Notes
 
-- Phases 0-3 are substantially complete
-- Focus on documentation and testing before Phase 4
-- RAG features (Phase 4) deferred until Ollama is set up
+- Phases 0-4 and 6 are complete
+- RAG features (Phase 4) implemented with fastembed (no PyTorch/Ollama)
+- Auto-embedding via git post-commit hook
 - Keep commits atomic and use conventional commit messages
 - Document as you go
 - ResearchKit patterns are the reference implementation

@@ -154,7 +154,7 @@ All tools:
 - Good for active coding
 
 ### OpenCode
-- Local model support (Ollama)
+- Local model support
 - Open source
 - Customizable agents
 - Privacy-focused

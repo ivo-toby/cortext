@@ -121,9 +121,15 @@ echo '{"method":"tools/list","params":{}}' | cortext-mcp
 - Check that conversations exist in `conversations/`
 - Try a broader query
 
-## Future Enhancements (Phase 4)
+## Current Features (Phase 4 Complete)
 
-- Semantic search with embeddings (Ollama integration)
+- Semantic search with embeddings (fastembed - no PyTorch required)
+- Automatic embedding via git post-commit hook
+- Related conversation suggestions via `get_similar` tool
+- See `Docs/rag-guide.md` for complete RAG documentation
+
+## Future Enhancements (Phase 5)
+
 - Automatic context injection
-- Related conversation suggestions
 - Timeline queries
+- Knowledge graph visualization

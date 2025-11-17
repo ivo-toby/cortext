@@ -5,6 +5,12 @@
 **Status:** Design Phase - Ready to Build
 **Based on:** ResearchKit architecture + RAG + Git-based knowledge management
 
+> **Note (2025-11-17):** This is the original architecture document. Some implementation details have changed:
+> - RAG uses **fastembed** instead of Ollama for embeddings (no PyTorch, lighter footprint)
+> - Auto-embedding via **git post-commit hook** instead of manual or Ollama-based
+> - ChromaDB for vector storage (as planned)
+> - See `Docs/rag-guide.md` for current RAG implementation details
+
 ---
 
 ## Document Structure
@@ -229,22 +235,23 @@ Each conversation type has:
 
 **Features:**
 - Index conversations, notes, decisions, research
-- Semantic search via embeddings (local models via Ollama)
+- Semantic search via embeddings (fastembed with all-MiniLM-L6-v2)
 - Context injection into new conversations
 - Related content suggestions
 - Timeline queries ("What did I learn about Kubernetes last month?")
 
 **Implementation Phases:**
 
-**Phase 1: Simple full-text search**
+**Phase 1: Simple full-text search** ✅
 - MCP server wraps ripgrep/grep
 - Search conversations by keyword
 - No embeddings, just fast text search
 
-**Phase 2: Semantic search**
-- Local embeddings via Ollama (e.g., `nomic-embed-text`)
-- Vector store (ChromaDB, FAISS, or simple JSON)
+**Phase 2: Semantic search** ✅
+- Local embeddings via fastembed (no PyTorch required)
+- Vector store (ChromaDB)
 - Semantic similarity search
+- Auto-embed via git post-commit hook
 
 **Phase 3: Advanced features**
 - Automatic context injection based on current conversation
@@ -338,7 +345,7 @@ set-hook -g session-closed 'run-shell "~/ai-workspace/.workspace/scripts/index-c
 **OpenCode:**
 - Custom agent configuration in `AGENT_CONFIG.toml`
 - Slash commands in `.opencode/commands/`
-- Ollama support for local models
+- Local RAG via fastembed (no external dependencies)
 - Same workspace constitution
 
 **Gemini CLI:**
