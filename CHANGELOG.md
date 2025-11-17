@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **MCP server**: Supports both old and new structures for backward compatibility
 - **Recommendation**: New workspaces should use new structure; existing workspaces can migrate manually if desired
 
+#### Code Quality
+- **Extracted default conversation types to constant**: `DEFAULT_CONVERSATION_TYPES` in MCP server
+  - Single source of truth for default types
+  - Eliminated duplicate dictionary definitions
+  - Improved maintainability
+
 ### Fixed
 
 #### Init Command Path Handling

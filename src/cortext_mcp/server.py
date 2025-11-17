@@ -8,6 +8,17 @@ from pathlib import Path
 from typing import Any
 
 
+# Default conversation types when registry is unavailable
+DEFAULT_CONVERSATION_TYPES = {
+    "brainstorm": "brainstorm",
+    "debug": "debug",
+    "learn": "learn",
+    "meeting": "meeting",
+    "plan": "plan",
+    "review": "review",
+}
+
+
 class CortextMCPServer:
     """MCP server for Cortext workspace operations."""
 
@@ -50,14 +61,7 @@ class CortextMCPServer:
         """Load conversation types and their folders from registry."""
         if not self.registry_path.exists():
             # Default types if registry doesn't exist
-            return {
-                "brainstorm": "brainstorm",
-                "debug": "debug",
-                "learn": "learn",
-                "meeting": "meeting",
-                "plan": "plan",
-                "review": "review",
-            }
+            return DEFAULT_CONVERSATION_TYPES.copy()
 
         try:
             with open(self.registry_path) as f:
@@ -68,14 +72,7 @@ class CortextMCPServer:
             return types
         except Exception:
             # Fallback to defaults
-            return {
-                "brainstorm": "brainstorm",
-                "debug": "debug",
-                "learn": "learn",
-                "meeting": "meeting",
-                "plan": "plan",
-                "review": "review",
-            }
+            return DEFAULT_CONVERSATION_TYPES.copy()
 
     def list_tools(self) -> dict[str, Any]:
         """List available tools."""
