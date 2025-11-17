@@ -314,13 +314,11 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
             configured_tools.append("Claude Code")
 
         elif tool == "gemini":
-            # Convert Claude commands to Gemini TOML
+            # Convert source commands to Gemini TOML (independent of Claude)
             gemini_dir = workspace_dir / ".gemini" / "commands"
-            claude_dir = workspace_dir / ".claude" / "commands"
-            if claude_dir.exists():
-                converted = convert_claude_commands_to_gemini(claude_dir, gemini_dir)
-                if converted:
-                    configured_tools.append(f"Gemini CLI ({len(converted)} commands)")
+            converted = convert_claude_commands_to_gemini(commands_dir, gemini_dir)
+            if converted:
+                configured_tools.append(f"Gemini CLI ({len(converted)} commands)")
 
         elif tool == "opencode":
             # Create OpenCode configuration
