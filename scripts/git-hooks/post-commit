@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Cortext post-commit hook
+# Auto-embeds workspace changes for RAG search after each commit
+
+# Only run if cortext command is available
+if ! command -v cortext &> /dev/null; then
+    exit 0
+fi
+
+# Only run if we're in a workspace
+if [ ! -d ".workspace" ]; then
+    exit 0
+fi
+
+# Auto-embed changed files (UPSERT logic skips unchanged)
+cortext embed --all 2>/dev/null || true

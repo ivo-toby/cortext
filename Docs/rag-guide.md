@@ -317,19 +317,39 @@ This ensures context is preserved at chunk boundaries.
 
 ## Auto-Embed
 
-Conversations are automatically embedded after creation.
+Conversations and documents are automatically embedded in two ways:
+
+### 1. On Conversation Creation
+
+When you create a new conversation via bash scripts:
+1. Bash script creates conversation directory
+2. Calls `auto-embed.sh` hook
+3. Embeds the conversation template
+
+### 2. On Every Git Commit (Recommended)
+
+A git post-commit hook automatically embeds changes after each commit:
+1. Agent creates/modifies files
+2. Agent commits changes
+3. Post-commit hook runs `cortext embed --all`
+4. Only changed files are re-embedded (UPSERT logic)
+
+This ensures all content is indexed regardless of which AI agent creates it.
 
 ### How It Works
 
-1. Bash script creates conversation
-2. Calls `auto-embed.sh` hook
-3. Hook checks if RAG is available
-4. Embeds conversation directory
-5. Updates status metadata
+The post-commit hook is installed during `cortext init` in `.git/hooks/post-commit`:
+
+```bash
+#!/usr/bin/env bash
+# Auto-embed after each commit
+cortext embed --all 2>/dev/null || true
+```
 
 ### Disable Auto-Embed
 
-Remove or rename `scripts/bash/auto-embed.sh` to disable.
+- **Disable post-commit hook:** Remove `.git/hooks/post-commit`
+- **Disable conversation creation hook:** Remove `auto-embed.sh` from scripts
 
 ### Manual Re-Embed
 

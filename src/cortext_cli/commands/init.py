@@ -21,6 +21,7 @@ from cortext_cli.utils import (
     AGENT_CONFIG,
     StepTracker,
     get_commands_dir,
+    get_git_hooks_dir,
     get_scripts_dir,
     get_template_dir,
 )
@@ -164,6 +165,9 @@ def init(
 
         # Create initial constitution
         create_constitution(workspace_dir, tracker)
+
+        # Install git hooks
+        install_git_hooks(workspace_dir, tracker)
 
         # Initial git commit
         try:
@@ -634,3 +638,48 @@ Template for new decisions:
     decisions_path.write_text(decisions.format(date=datetime.now().strftime("%Y-%m-%d")))
 
     tracker.add_step("Created constitution and memory files")
+
+
+def install_git_hooks(workspace_dir: Path, tracker: StepTracker):
+    """Install git hooks for auto-embedding."""
+    git_hooks_src = get_git_hooks_dir()
+    git_hooks_dest = workspace_dir / ".git" / "hooks"
+
+    if not git_hooks_src.exists():
+        tracker.add_info("Git hooks directory not found, skipping")
+        return
+
+    if not git_hooks_dest.exists():
+        tracker.add_warning("Git hooks directory not found (is git initialized?)")
+        return
+
+    hooks_installed = 0
+
+    # Install post-commit hook for auto-embedding
+    post_commit_src = git_hooks_src / "post-commit"
+    if post_commit_src.exists():
+        post_commit_dest = git_hooks_dest / "post-commit"
+
+        # Check if hook already exists
+        if post_commit_dest.exists():
+            # Append our hook if not already present
+            existing_content = post_commit_dest.read_text()
+            if "cortext embed" not in existing_content:
+                with open(post_commit_dest, "a") as f:
+                    f.write("\n\n# Cortext auto-embed hook\n")
+                    f.write(post_commit_src.read_text())
+                hooks_installed += 1
+            else:
+                tracker.add_info("Post-commit hook already has auto-embed")
+        else:
+            # Copy the hook
+            shutil.copy2(post_commit_src, post_commit_dest)
+            # Make executable
+            if os.name != "nt":
+                os.chmod(post_commit_dest, 0o755)
+            hooks_installed += 1
+
+    if hooks_installed > 0:
+        tracker.add_step(f"Installed {hooks_installed} git hook(s) for auto-embedding")
+    else:
+        tracker.add_info("No git hooks to install")
