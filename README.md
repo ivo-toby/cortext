@@ -12,7 +12,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 - **🔄 Git-Based** - Every conversation and decision tracked in version control
 - **🤖 Multi-AI Support** - Works with Claude Code, OpenCode, Gemini CLI, Cursor, and more
 - **🧠 Persistent Memory** - Personal constitution defines your working style across all tools
-- **🔍 RAG Search** - Semantic search across all conversations (coming in Phase 4)
+- **🔍 RAG Search** - Semantic search across all conversations using local embeddings
 - **🎯 Workflow Automation** - Bash scripts and slash commands for repeatable processes
 
 ---
@@ -31,6 +31,9 @@ uv tool install .
 
 # Or with pip
 pip install -e .
+
+# Install with RAG features (optional)
+pip install -e ".[rag]"
 
 # Verify installation
 cortext check
@@ -154,6 +157,33 @@ Commits are structured and searchable:
 [debug] Found root cause: race condition in auth handler
 [decision] Chose PostgreSQL over MongoDB for scalability
 ```
+
+### RAG Pipeline (Optional)
+
+Semantic search across your workspace using local embeddings.
+
+```bash
+# Install RAG dependencies
+pip install cortext-workspace[rag]
+
+# Embed workspace for semantic search
+cortext embed --all
+
+# Search by meaning (not just keywords)
+cortext search "authentication best practices" --semantic
+
+# Check embedding status
+cortext rag status
+```
+
+Features:
+- **Local embeddings** - sentence-transformers (no API keys)
+- **Vector store** - ChromaDB for persistent storage
+- **UPSERT logic** - Only re-embeds changed files
+- **Auto-embed** - New conversations embedded automatically
+- **Multi-format** - Markdown, PDF, Word, HTML, plain text
+
+See **[RAG Guide](Docs/rag-guide.md)** for complete documentation.
 
 ---
 
