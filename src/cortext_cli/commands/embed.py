@@ -25,14 +25,7 @@ def embed_command(
         cortext embed ./docs/research.pdf
         cortext embed --all
     """
-    try:
-        from cortext_rag import mcp_tools
-    except ImportError:
-        console.print(
-            "[red]RAG dependencies not installed.[/red]\n"
-            "Install with: [cyan]pip install cortext-workspace[rag][/cyan]"
-        )
-        raise typer.Exit(1)
+    from cortext_rag import mcp_tools
 
     if not path and not all_workspace:
         console.print(

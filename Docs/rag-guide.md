@@ -17,13 +17,8 @@ Semantic search and context retrieval for Cortext workspaces.
 
 ## Installation
 
-RAG features require additional dependencies. Install with:
+RAG features are included with Cortext by default. All necessary dependencies are installed automatically:
 
-```bash
-pip install cortext-workspace[rag]
-```
-
-This installs:
 - **sentence-transformers** - Local embedding model
 - **chromadb** - Vector database
 - **pypdf** - PDF parsing
@@ -322,7 +317,7 @@ This ensures context is preserved at chunk boundaries.
 
 ## Auto-Embed
 
-Conversations are automatically embedded after creation (if RAG is installed).
+Conversations are automatically embedded after creation.
 
 ### How It Works
 
@@ -352,22 +347,16 @@ cortext embed --all
 
 ## Troubleshooting
 
-### RAG Dependencies Not Installed
+### Verify Dependencies
 
-**Error:**
-```
-RAG dependencies not installed.
-Install with: pip install cortext-workspace[rag]
-```
-
-**Fix:**
-```bash
-pip install cortext-workspace[rag]
-```
-
-Verify:
+**Check installation:**
 ```bash
 python -c "import sentence_transformers; import chromadb"
+```
+
+If this fails, reinstall Cortext:
+```bash
+pip install -e /path/to/cortext
 ```
 
 ### Slow First Embedding

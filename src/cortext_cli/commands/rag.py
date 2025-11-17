@@ -20,14 +20,7 @@ def rag_status() -> None:
     Example:
         cortext rag status
     """
-    try:
-        from cortext_rag import mcp_tools
-    except ImportError:
-        console.print(
-            "[red]RAG dependencies not installed.[/red]\n"
-            "Install with: [cyan]pip install cortext-workspace[rag][/cyan]"
-        )
-        raise typer.Exit(1)
+    from cortext_rag import mcp_tools
 
     workspace_path = Path.cwd()
 

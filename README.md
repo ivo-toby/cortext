@@ -32,9 +32,6 @@ uv tool install .
 # Or with pip
 pip install -e .
 
-# Install with RAG features (optional)
-pip install -e ".[rag]"
-
 # Verify installation
 cortext check
 ```

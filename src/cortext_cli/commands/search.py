@@ -58,16 +58,7 @@ def _semantic_search(
     limit: int,
 ) -> None:
     """Perform semantic search using RAG pipeline."""
-    try:
-        from cortext_rag import mcp_tools
-    except ImportError:
-        console.print(
-            "[red]RAG dependencies not installed.[/red]\n"
-            "Install with: [cyan]pip install cortext-workspace[rag][/cyan]\n"
-            "\nFalling back to keyword search..."
-        )
-        _keyword_search(query, workspace_path, conversation_type, limit)
-        return
+    from cortext_rag import mcp_tools
 
     result = mcp_tools.search_semantic(
         query=query,
