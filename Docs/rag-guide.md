@@ -19,7 +19,7 @@ Semantic search and context retrieval for Cortext workspaces.
 
 RAG features are included with Cortext by default. All necessary dependencies are installed automatically:
 
-- **sentence-transformers** - Local embedding model
+- **fastembed** - Lightweight local embedding model (no PyTorch/CUDA required)
 - **chromadb** - Vector database
 - **pypdf** - PDF parsing
 - **python-docx** - Word document parsing
@@ -27,7 +27,7 @@ RAG features are included with Cortext by default. All necessary dependencies ar
 
 ### First Run
 
-On first use, the embedding model (`all-MiniLM-L6-v2`) downloads automatically (~90MB). Subsequent runs use cached model.
+On first use, the embedding model (`all-MiniLM-L6-v2`) downloads automatically (~25MB). Subsequent runs use cached model.
 
 ---
 
@@ -351,7 +351,7 @@ cortext embed --all
 
 **Check installation:**
 ```bash
-python -c "import sentence_transformers; import chromadb"
+python -c "import fastembed; import chromadb"
 ```
 
 If this fails, reinstall Cortext:
@@ -430,9 +430,10 @@ cortext embed --all
 
 ### Embedding Model
 
+- **Library**: fastembed (lightweight, no PyTorch required)
 - **Model**: `all-MiniLM-L6-v2`
 - **Dimensions**: 384
-- **Size**: ~90MB
+- **Size**: ~25MB
 - **Performance**: Good balance of speed and quality
 
 ### Vector Store

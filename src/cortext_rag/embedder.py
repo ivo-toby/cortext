@@ -1,16 +1,27 @@
-"""Embedding generation using sentence-transformers."""
+"""Embedding generation using fastembed."""
 
 from typing import Any
 
 
 class Embedder:
-    """Generate embeddings using sentence-transformers."""
+    """Generate embeddings using fastembed (lightweight, no PyTorch)."""
+
+    # Model name mapping for convenience
+    MODEL_ALIASES = {
+        "all-MiniLM-L6-v2": "sentence-transformers/all-MiniLM-L6-v2",
+    }
+
+    # Known embedding dimensions
+    MODEL_DIMENSIONS = {
+        "sentence-transformers/all-MiniLM-L6-v2": 384,
+    }
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         """Initialize embedder with lazy model loading."""
-        self._model_name = model_name
+        # Support both short and full names
+        self._model_name = self.MODEL_ALIASES.get(model_name, model_name)
         self._model = None
-        self._embedding_dim = None
+        self._embedding_dim = self.MODEL_DIMENSIONS.get(self._model_name)
 
     @property
     def model_name(self) -> str:
@@ -29,17 +40,14 @@ class Embedder:
         if self._model is not None:
             return
 
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ImportError:
-            raise ImportError(
-                "sentence-transformers not installed. "
-                "Install with: pip install cortext-workspace[rag]"
-            )
+        from fastembed import TextEmbedding
 
-        self._model = SentenceTransformer(self._model_name)
-        # Get embedding dimension from model
-        self._embedding_dim = self._model.get_sentence_embedding_dimension()
+        self._model = TextEmbedding(model_name=self._model_name)
+
+        # If dimension not known, get it from a test embedding
+        if self._embedding_dim is None:
+            test_emb = list(self._model.embed(["test"]))[0]
+            self._embedding_dim = len(test_emb)
 
     def embed(self, texts: list[str], batch_size: int = 32) -> list[list[float]]:
         """Generate embeddings for multiple texts.
@@ -56,13 +64,8 @@ class Embedder:
 
         self._load_model()
 
-        # Encode with batching
-        embeddings = self._model.encode(
-            texts,
-            batch_size=batch_size,
-            show_progress_bar=len(texts) > 100,
-            convert_to_numpy=True,
-        )
+        # fastembed returns a generator of numpy arrays
+        embeddings = list(self._model.embed(texts, batch_size=batch_size))
 
         # Convert to list of lists for JSON serialization
         return [emb.tolist() for emb in embeddings]

@@ -174,7 +174,7 @@ cortext rag status
 ```
 
 Features:
-- **Local embeddings** - sentence-transformers (no API keys)
+- **Local embeddings** - fastembed (no API keys, no PyTorch)
 - **Vector store** - ChromaDB for persistent storage
 - **UPSERT logic** - Only re-embeds changed files
 - **Auto-embed** - New conversations embedded automatically
