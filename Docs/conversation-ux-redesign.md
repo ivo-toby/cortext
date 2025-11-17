@@ -1,7 +1,7 @@
 # Brainstorm: Conversation UX Redesign
 
 **Date:** 2025-11-11
-**Status:** Problem identified, needs OpenSpec proposal
+**Status:** Solved
 
 ---
 
@@ -18,6 +18,7 @@ Current conversation workflows are **template-filling**, not **conversation-docu
 5. Conversation basically ends ❌
 
 **Feels like:**
+
 - "Fill out this form"
 - One-shot generation
 - Prescriptive structure
@@ -34,6 +35,7 @@ Current conversation workflows are **template-filling**, not **conversation-docu
 7. Natural back-and-forth until user is done ✅
 
 **Should feel like:**
+
 - "Let's explore this together"
 - Living document that evolves
 - Natural dialogue with documentation as a side-effect
@@ -44,15 +46,19 @@ Current conversation workflows are **template-filling**, not **conversation-docu
 ## Specific Issues
 
 ### Issue 1: One-Shot Generation
+
 After initial template creation, the conversation ends. No ongoing dialogue.
 
 ### Issue 2: Template Over Conversation
+
 Templates are too prescriptive. They define "fields to fill" instead of "sections to explore."
 
 ### Issue 3: No Real-Time Documentation
+
 Claude should be updating the document **during** the conversation, not just at the start.
 
 ### Issue 4: Unclear "Done" Signal
+
 No natural way to continue or signal completion. User has to explicitly ask to keep going.
 
 ---
@@ -64,18 +70,21 @@ No natural way to continue or signal completion. User has to explicitly ask to k
 Change conversation type prompts (like `/workspace.learn`) to:
 
 **Start a conversation, not fill a template:**
+
 - Ask questions naturally
 - Explore the topic together
 - Let the dialogue flow
 - Don't treat initial response as "done"
 
 **Document as we go:**
+
 - Update the learning notes file continuously during conversation
 - Add insights when they emerge
 - Refine and reorganize as discussion evolves
 - Use Edit tool frequently to update document
 
 **Keep it open-ended:**
+
 - Keep asking follow-ups naturally
 - Let user signal when finished
 - Suggest related topics to explore
@@ -86,18 +95,23 @@ Change conversation type prompts (like `/workspace.learn`) to:
 Templates should be **minimal scaffolding**, not prescriptive forms:
 
 **Current (too prescriptive):**
+
 ```markdown
 ## Topic
+
 [Describe the topic]
 
 ## Key Concepts
+
 [List key concepts]
 
 ## Examples
+
 [Provide examples]
 ```
 
 **Better (minimal scaffolding):**
+
 ```markdown
 # Learning: [Topic]
 
@@ -112,7 +126,6 @@ Templates should be **minimal scaffolding**, not prescriptive forms:
 ---
 
 ## References
-
 ```
 
 ### 3. Update Slash Command Behavior
@@ -120,6 +133,7 @@ Templates should be **minimal scaffolding**, not prescriptive forms:
 Change slash commands to emphasize **conversation over generation**:
 
 **Current instruction pattern:**
+
 ```markdown
 1. Ask: "What would you like to learn?"
 2. Create file from template
@@ -128,6 +142,7 @@ Change slash commands to emphasize **conversation over generation**:
 ```
 
 **Better instruction pattern:**
+
 ```markdown
 1. Ask: "What would you like to learn?"
 2. Create minimal document with topic
@@ -155,30 +170,37 @@ This issue affects **all** conversation types:
 ## Technical Changes Needed
 
 ### 1. Slash Command Files
+
 **Files:** `.claude/commands/workspace_*.md`
 
 Update all conversation type commands to:
+
 - Emphasize ongoing dialogue
 - Instruct to use Edit tool frequently during conversation
 - Remove "completion" mentality
 - Add prompts to keep conversation going
 
 ### 2. Templates
+
 **Files:** `.workspace/templates/*.md`
 
 Simplify all templates:
+
 - Remove prescriptive field structure
 - Provide minimal section headers
 - Focus on flexibility
 - Let content emerge from conversation
 
 ### 3. Bash Scripts
+
 **Files:** `scripts/bash/*.sh`
 
 No changes needed - scripts just create folders and copy templates.
 
 ### 4. Documentation
+
 Update user guide to explain:
+
 - Conversations are dialogues, not forms
 - Documents evolve during discussion
 - How to signal when done
@@ -189,6 +211,7 @@ Update user guide to explain:
 ## Example: Redesigned Learn Flow
 
 ### Before (Template-Filling)
+
 ```
 User: /workspace.learn
 Claude: "What do you want to learn?"
@@ -199,6 +222,7 @@ Claude: [Creates document with sections filled]
 ```
 
 ### After (Conversation-Documenting)
+
 ```
 User: /workspace.learn
 Claude: "What do you want to learn?"
