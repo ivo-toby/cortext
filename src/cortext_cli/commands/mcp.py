@@ -178,7 +178,7 @@ def _get_config_path(workspace_dir: Path, agent: str) -> Optional[Path]:
     elif agent == "gemini":
         return Path.home() / ".gemini" / "settings.json"
     elif agent == "opencode":
-        return workspace_dir / ".opencode" / "mcp_config.json"
+        return workspace_dir / "opencode.json"
     return None
 
 
@@ -264,25 +264,44 @@ def _install_gemini_mcp_config(workspace_dir: Path) -> bool:
 
 
 def _install_opencode_mcp_config(workspace_dir: Path) -> bool:
-    """Install MCP config for OpenCode (workspace-local)."""
+    """Install MCP config for OpenCode (workspace root opencode.json)."""
     template_dir = get_template_dir()
-    template_path = template_dir / "mcp_config.json"
+    template_path = template_dir / "opencode_config.json"
 
     if not template_path.exists():
         return False
 
-    # Read template
-    template_content = template_path.read_text()
+    # Check if opencode.json already exists
+    config_path = workspace_dir / "opencode.json"
 
-    # Substitute workspace path
+    if config_path.exists():
+        # Merge with existing config
+        try:
+            existing_config = json.loads(config_path.read_text())
+            if "mcp" not in existing_config:
+                existing_config["mcp"] = {}
+
+            # Add cortext MCP server
+            existing_config["mcp"]["cortext"] = {
+                "type": "local",
+                "command": ["cortext-mcp"],
+                "enabled": True,
+                "environment": {
+                    "WORKSPACE_PATH": str(workspace_dir.absolute())
+                }
+            }
+
+            config_path.write_text(json.dumps(existing_config, indent=2))
+            return True
+        except json.JSONDecodeError:
+            # If existing file is invalid, backup and create new
+            config_path.rename(config_path.with_suffix(".json.bak"))
+
+    # Create new config from template
+    template_content = template_path.read_text()
     config_content = template_content.replace(
         "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
     )
-
-    # Write to OpenCode's workspace-local config
-    config_dir = workspace_dir / ".opencode"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_path = config_dir / "mcp_config.json"
 
     config_path.write_text(config_content)
     return True
