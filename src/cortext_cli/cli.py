@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from cortext_cli.commands import check, init, list
+from cortext_cli.commands import check, init, list, embed, search, rag, mcp
 
 console = Console()
 
@@ -33,10 +33,14 @@ def callback(ctx: typer.Context):
                 "[bold cyan]🧠 Cortext[/bold cyan]\n\n"
                 "AI-augmented workspace for knowledge work\n\n"
                 "[dim]Commands:[/dim]\n"
-                "  [green]cortext init[/green]     Initialize a new workspace\n"
-                "  [green]cortext check[/green]    Check required tools\n"
-                "  [green]cortext list[/green]     List conversation types\n"
-                "  [green]cortext --help[/green]   Show all commands\n",
+                "  [green]cortext init[/green]       Initialize a new workspace\n"
+                "  [green]cortext check[/green]      Check required tools\n"
+                "  [green]cortext list[/green]       List conversation types\n"
+                "  [green]cortext embed[/green]      Embed documents for RAG\n"
+                "  [green]cortext search[/green]     Search conversations\n"
+                "  [green]cortext rag status[/green] RAG embedding statistics\n"
+                "  [green]cortext mcp install[/green] Configure MCP server\n"
+                "  [green]cortext --help[/green]     Show all commands\n",
                 border_style="cyan",
             )
         )
@@ -45,6 +49,10 @@ def callback(ctx: typer.Context):
 app.command()(check.check)
 app.command()(init.init)
 app.command(name="list")(list.list_types)
+app.command(name="embed")(embed.embed_command)
+app.command(name="search")(search.search_command)
+app.add_typer(rag.app, name="rag")
+app.add_typer(mcp.app, name="mcp")
 
 
 def main():

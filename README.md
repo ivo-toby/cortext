@@ -12,7 +12,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 - **🔄 Git-Based** - Every conversation and decision tracked in version control
 - **🤖 Multi-AI Support** - Works with Claude Code, OpenCode, Gemini CLI, Cursor, and more
 - **🧠 Persistent Memory** - Personal constitution defines your working style across all tools
-- **🔍 RAG Search** - Semantic search across all conversations (coming in Phase 4)
+- **🔍 RAG Search** - Semantic search across all conversations using local embeddings
 - **🎯 Workflow Automation** - Bash scripts and slash commands for repeatable processes
 
 ---
@@ -77,6 +77,27 @@ Once your workspace is initialized, Claude Code will have access to conversation
 /workspace.meeting       Capture meeting notes and actions
 /workspace.review        Conduct code or design reviews
 ```
+
+### MCP Server (AI Agent Integration)
+
+Cortext includes an MCP (Model Context Protocol) server that AI agents can use to search your workspace:
+
+**Automatic Configuration:**
+```bash
+# MCP is automatically configured during workspace init
+cortext init --ai claude           # Prompts for MCP setup
+cortext init --ai claude --mcp     # Explicitly enable
+cortext init --ai claude --no-mcp  # Skip MCP
+
+# For existing workspaces
+cortext mcp install
+```
+
+**Available Tools for Agents:**
+- **Keyword Search** - `search_workspace`, `get_context`, `get_decision_history`
+- **Semantic Search** - `search_semantic`, `get_similar`, `embed_document`
+
+Agents can now search past conversations, find related discussions, and build on previous work automatically.
 
 ### Directory Structure
 
@@ -155,6 +176,30 @@ Commits are structured and searchable:
 [decision] Chose PostgreSQL over MongoDB for scalability
 ```
 
+### RAG Pipeline
+
+Semantic search across your workspace using local embeddings (included by default).
+
+```bash
+# Embed workspace for semantic search
+cortext embed --all
+
+# Search by meaning (not just keywords)
+cortext search "authentication best practices" --semantic
+
+# Check embedding status
+cortext rag status
+```
+
+Features:
+- **Local embeddings** - fastembed (no API keys, no PyTorch)
+- **Vector store** - ChromaDB for persistent storage
+- **UPSERT logic** - Only re-embeds changed files
+- **Auto-embed** - New conversations embedded automatically
+- **Multi-format** - Markdown, PDF, Word, HTML, plain text
+
+See **[RAG Guide](Docs/rag-guide.md)** for complete documentation.
+
 ---
 
 ## 🛠️ Development
@@ -176,8 +221,7 @@ Contributions welcome! See the task list for areas needing work.
 - bash (for Unix systems)
 
 Optional:
-- Ollama (for RAG features in Phase 4)
-- ripgrep (for fast search in Phase 2)
+- ripgrep (for fast keyword search)
 - tmux (for session management)
 
 ### Testing Development Locally
@@ -230,8 +274,8 @@ python3 -m cortext_cli.cli init .
 - **Phase 1:** Templates, commands, registry ✅
 - **Phase 2:** MCP server with search ✅
 - **Phase 3:** Multi-AI tool support ✅
-- **Phase 4:** RAG with Ollama (deferred - requires setup)
-- **Phase 5:** Advanced features (deferred - polish phase)
+- **Phase 4:** RAG with local embeddings ✅
+- **Phase 5:** Advanced features (planned)
 - **Phase 6:** Documentation & release ✅
 
 **Current Status**: ✅ **Production Ready** - Core functionality complete and tested.
@@ -269,12 +313,12 @@ Inspired by:
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/cortext/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/cortext/discussions)
+- **Issues:** [GitHub Issues](https://github.com/ivo-toby/cortext/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/ivo-toby/cortext/discussions)
 - **Documentation:** See `Docs/` directory
 
 ---
 
 **Status:** 🚧 Active Development
 **Version:** 0.1.0
-**Last Updated:** 2025-11-10
+**Last Updated:** 2025-11-17

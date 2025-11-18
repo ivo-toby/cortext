@@ -68,6 +68,11 @@ Type: learning
 Purpose: Learning notes and documentation
 " 2>/dev/null || print_warning "Nothing new to commit"
 
+# Auto-embed for RAG (if available)
+if [ -f "${SCRIPT_DIR}/auto-embed.sh" ]; then
+    "${SCRIPT_DIR}/auto-embed.sh" "$CONVERSATION_DIR" 2>/dev/null || true
+fi
+
 # Display summary
 echo "" >&2
 print_success "Learning session created!"

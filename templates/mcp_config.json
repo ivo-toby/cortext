@@ -3,7 +3,9 @@
     "cortext": {
       "command": "cortext-mcp",
       "args": [],
-      "env": {}
+      "env": {
+        "WORKSPACE_PATH": "{{WORKSPACE_PATH}}"
+      }
     }
   }
 }
