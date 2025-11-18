@@ -82,7 +82,7 @@ class CortextMCPServer:
     def initialize(self) -> dict[str, Any]:
         """Initialize the MCP server."""
         return {
-            "protocolVersion": "0.1.0",
+            "protocolVersion": "2024-11-05",
             "serverInfo": {
                 "name": "cortext-mcp",
                 "version": "0.1.0",

@@ -791,7 +791,8 @@ def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
         # Check if claude CLI is available
         result = subprocess.run(
             ["claude", "mcp", "add", "--transport", "stdio", "--scope", "local",
-             "cortext", "--", "cortext-mcp"],
+             "cortext", "--env", f"WORKSPACE_PATH={workspace_dir.absolute()}",
+             "--", "cortext-mcp"],
             cwd=workspace_dir,
             capture_output=True,
             text=True,
@@ -808,14 +809,14 @@ def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
             # Fall back to instructions
             tracker.add_warning(
                 "Could not auto-register MCP server. "
-                f"Run: claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+                f"Run: claude mcp add --transport stdio --scope local cortext --env WORKSPACE_PATH={workspace_dir.absolute()} -- cortext-mcp"
             )
             return False
     except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
         # Claude CLI not available or command failed
         tracker.add_warning(
             "Claude CLI not available. To enable MCP server, run:\n"
-            "  claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+            f"  claude mcp add --transport stdio --scope local cortext --env WORKSPACE_PATH={workspace_dir.absolute()} -- cortext-mcp"
         )
         return False
 
