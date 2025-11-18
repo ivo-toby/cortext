@@ -83,15 +83,17 @@ The server will be available in all Claude Code sessions once registered.
 
 #### OpenCode
 
-For OpenCode (`.opencode/mcp_config.json`):
+For OpenCode (`opencode.json` at workspace root):
 
 ```json
 {
-  "mcpServers": {
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
     "cortext": {
-      "command": "cortext-mcp",
-      "args": [],
-      "env": {
+      "type": "local",
+      "command": ["cortext-mcp"],
+      "enabled": true,
+      "environment": {
         "WORKSPACE_PATH": "/absolute/path/to/workspace"
       }
     }
