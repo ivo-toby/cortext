@@ -7,6 +7,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Import RAG tools for semantic search capabilities
+try:
+    from cortext_rag import mcp_tools
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+
 
 # Default conversation types when registry is unavailable
 DEFAULT_CONVERSATION_TYPES = {
@@ -76,71 +83,180 @@ class CortextMCPServer:
 
     def list_tools(self) -> dict[str, Any]:
         """List available tools."""
-        return {
-            "tools": [
-                {
-                    "name": "search_workspace",
-                    "description": "Search across conversations, notes, and research in the Cortext workspace",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "Search query (supports regex)",
-                            },
-                            "type": {
-                                "type": "string",
-                                "description": "Filter by conversation type (brainstorm, debug, plan, learn, meeting, review, or 'all')",
-                                "default": "all",
-                            },
-                            "date_range": {
-                                "type": "string",
-                                "description": "Filter by date range. Supports YYYY-MM (month) or YYYY-MM-DD (day) format. Examples: '2025-11' or '2025-11-10'",
-                            },
-                            "limit": {
-                                "type": "number",
-                                "description": "Maximum number of results to return",
-                                "default": 10,
-                            },
+        tools = [
+            {
+                "name": "search_workspace",
+                "description": "Search across conversations, notes, and research in the Cortext workspace",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query (supports regex)",
                         },
-                        "required": ["query"],
+                        "type": {
+                            "type": "string",
+                            "description": "Filter by conversation type (brainstorm, debug, plan, learn, meeting, review, or 'all')",
+                            "default": "all",
+                        },
+                        "date_range": {
+                            "type": "string",
+                            "description": "Filter by date range. Supports YYYY-MM (month) or YYYY-MM-DD (day) format. Examples: '2025-11' or '2025-11-10'",
+                        },
+                        "limit": {
+                            "type": "number",
+                            "description": "Maximum number of results to return",
+                            "default": 10,
+                        },
+                    },
+                    "required": ["query"],
+                },
+            },
+            {
+                "name": "get_context",
+                "description": "Get relevant context for a topic from past conversations",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Topic to search for",
+                        },
+                        "max_results": {
+                            "type": "number",
+                            "description": "Maximum number of relevant conversations to return",
+                            "default": 5,
+                        },
+                    },
+                    "required": ["topic"],
+                },
+            },
+            {
+                "name": "get_decision_history",
+                "description": "Retrieve past decisions on a topic",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Topic or decision area to search for",
+                        },
+                    },
+                    "required": ["topic"],
+                },
+            },
+        ]
+
+        # Add RAG tools if available
+        tools.extend(self._get_rag_tools())
+
+        return {"tools": tools}
+
+    def _get_rag_tools(self) -> list[dict[str, Any]]:
+        """Get RAG tool definitions if available."""
+        if not RAG_AVAILABLE:
+            return []
+
+        return [
+            {
+                "name": "embed_document",
+                "description": "Embed a specific document or conversation for semantic search",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to file or directory (relative or absolute)",
+                        },
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Optional workspace root path (defaults to current directory)",
+                        },
+                    },
+                    "required": ["path"],
+                },
+            },
+            {
+                "name": "embed_workspace",
+                "description": "Embed all unembedded content in the workspace for semantic search",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Optional workspace root path (defaults to current directory)",
+                        },
                     },
                 },
-                {
-                    "name": "get_context",
-                    "description": "Get relevant context for a topic from past conversations",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "topic": {
-                                "type": "string",
-                                "description": "Topic to search for",
-                            },
-                            "max_results": {
-                                "type": "number",
-                                "description": "Maximum number of relevant conversations to return",
-                                "default": 5,
-                            },
+            },
+            {
+                "name": "search_semantic",
+                "description": "Semantic search across workspace using embeddings (find conceptually similar content)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query text",
                         },
-                        "required": ["topic"],
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Optional workspace root path",
+                        },
+                        "n_results": {
+                            "type": "number",
+                            "description": "Maximum number of results to return",
+                            "default": 10,
+                        },
+                        "conversation_type": {
+                            "type": "string",
+                            "description": "Filter by conversation type (e.g., brainstorm, debug, plan)",
+                        },
+                        "date_range": {
+                            "type": "string",
+                            "description": "Filter by date range (YYYY-MM or YYYY-MM-DD format)",
+                        },
+                    },
+                    "required": ["query"],
+                },
+            },
+            {
+                "name": "get_similar",
+                "description": "Find documents similar to a given source document",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "source_path": {
+                            "type": "string",
+                            "description": "Path to source document",
+                        },
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Optional workspace root path",
+                        },
+                        "n_results": {
+                            "type": "number",
+                            "description": "Number of similar documents to return",
+                            "default": 5,
+                        },
+                    },
+                    "required": ["source_path"],
+                },
+            },
+            {
+                "name": "get_embedding_status",
+                "description": "Get workspace embedding statistics and status",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Optional workspace root path",
+                        },
                     },
                 },
-                {
-                    "name": "get_decision_history",
-                    "description": "Retrieve past decisions on a topic",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "topic": {
-                                "type": "string",
-                                "description": "Topic or decision area to search for",
-                            },
-                        },
-                        "required": ["topic"],
-                    },
-                },
-            ]
-        }
+            },
+        ]
 
     def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Execute a tool with given arguments."""
@@ -150,8 +266,45 @@ class CortextMCPServer:
             return self.get_context(**arguments)
         elif tool_name == "get_decision_history":
             return self.get_decision_history(**arguments)
+        # RAG tools
+        elif tool_name == "embed_document" and RAG_AVAILABLE:
+            return self._call_rag_tool(mcp_tools.embed_document, arguments)
+        elif tool_name == "embed_workspace" and RAG_AVAILABLE:
+            return self._call_rag_tool(mcp_tools.embed_workspace, arguments)
+        elif tool_name == "search_semantic" and RAG_AVAILABLE:
+            return self._call_rag_tool(mcp_tools.search_semantic, arguments)
+        elif tool_name == "get_similar" and RAG_AVAILABLE:
+            return self._call_rag_tool(mcp_tools.get_similar, arguments)
+        elif tool_name == "get_embedding_status" and RAG_AVAILABLE:
+            return self._call_rag_tool(mcp_tools.get_embedding_status, arguments)
         else:
             return {"error": f"Unknown tool: {tool_name}"}
+
+    def _call_rag_tool(self, tool_func, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Call a RAG tool and format the response for MCP."""
+        try:
+            result = tool_func(**arguments)
+
+            # If result has an error field, return error response
+            if "error" in result:
+                return {
+                    "content": [
+                        {"type": "text", "text": f"Error: {result['error']}"}
+                    ]
+                }
+
+            # Format successful result as text content
+            return {
+                "content": [
+                    {"type": "text", "text": json.dumps(result, indent=2)}
+                ]
+            }
+        except Exception as e:
+            return {
+                "content": [
+                    {"type": "text", "text": f"Error calling RAG tool: {str(e)}"}
+                ]
+            }
 
     def search_workspace(
         self,

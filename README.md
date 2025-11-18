@@ -78,6 +78,27 @@ Once your workspace is initialized, Claude Code will have access to conversation
 /workspace.review        Conduct code or design reviews
 ```
 
+### MCP Server (AI Agent Integration)
+
+Cortext includes an MCP (Model Context Protocol) server that AI agents can use to search your workspace:
+
+**Automatic Configuration:**
+```bash
+# MCP is automatically configured during workspace init
+cortext init --ai claude           # Prompts for MCP setup
+cortext init --ai claude --mcp     # Explicitly enable
+cortext init --ai claude --no-mcp  # Skip MCP
+
+# For existing workspaces
+cortext mcp install
+```
+
+**Available Tools for Agents:**
+- **Keyword Search** - `search_workspace`, `get_context`, `get_decision_history`
+- **Semantic Search** - `search_semantic`, `get_similar`, `embed_document`
+
+Agents can now search past conversations, find related discussions, and build on previous work automatically.
+
 ### Directory Structure
 
 ```

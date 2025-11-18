@@ -87,6 +87,12 @@ def init(
     path: Optional[str] = typer.Option(
         None, help="Explicit path for workspace (takes precedence over positional argument)"
     ),
+    mcp: bool = typer.Option(
+        None, help="Enable MCP server configuration for AI agents"
+    ),
+    no_mcp: bool = typer.Option(
+        False, help="Disable MCP server configuration"
+    ),
 ):
     """Initialize a new Cortext workspace.
 
@@ -168,6 +174,9 @@ def init(
 
         # Install git hooks
         install_git_hooks(workspace_dir, tracker)
+
+        # Configure MCP server registration
+        configure_mcp(workspace_dir, ai, mcp, no_mcp, tracker)
 
         # Initial git commit
         try:
@@ -683,3 +692,179 @@ def install_git_hooks(workspace_dir: Path, tracker: StepTracker):
         tracker.add_step(f"Installed {hooks_installed} git hook(s) for auto-embedding")
     else:
         tracker.add_info("No git hooks to install")
+
+
+def configure_mcp(
+    workspace_dir: Path,
+    ai: str,
+    mcp_flag: Optional[bool],
+    no_mcp_flag: bool,
+    tracker: StepTracker,
+):
+    """Configure MCP server registration for AI agents."""
+    # Determine if MCP should be configured
+    should_configure_mcp = _determine_mcp_preference(mcp_flag, no_mcp_flag)
+
+    if not should_configure_mcp:
+        tracker.add_info("MCP server configuration skipped")
+        return
+
+    # Check if cortext-mcp is available
+    mcp_available = _check_mcp_command()
+    if not mcp_available:
+        tracker.add_warning(
+            "cortext-mcp command not found in PATH. "
+            "MCP configs will be created but may not work until cortext-mcp is available."
+        )
+
+    # Determine which agents to configure
+    agents_to_configure = _get_agents_from_ai_option(ai)
+
+    # Install MCP config for each agent
+    configured_agents = []
+    for agent in agents_to_configure:
+        if _install_mcp_config_for_agent(workspace_dir, agent, tracker):
+            configured_agents.append(agent)
+
+    if configured_agents:
+        agent_list = ", ".join(configured_agents)
+        tracker.add_step(f"Configured MCP server for: {agent_list}")
+    else:
+        tracker.add_info("No MCP configurations created")
+
+
+def _determine_mcp_preference(mcp_flag: Optional[bool], no_mcp_flag: bool) -> bool:
+    """Determine if MCP should be configured based on flags and user prompt."""
+    # Flags take precedence
+    if no_mcp_flag:
+        return False
+    if mcp_flag is not None:
+        return mcp_flag
+
+    # Interactive prompt
+    return Confirm.ask(
+        "\n[cyan]Configure MCP server for AI agents?[/cyan]",
+        default=True,
+    )
+
+
+def _check_mcp_command() -> bool:
+    """Check if cortext-mcp command is available."""
+    try:
+        result = subprocess.run(
+            ["which", "cortext-mcp"],
+            capture_output=True,
+            timeout=5,
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def _get_agents_from_ai_option(ai: str) -> list[str]:
+    """Get list of agents to configure from ai option."""
+    if ai == "all":
+        return ["claude", "gemini", "opencode"]
+    else:
+        return [ai]
+
+
+def _install_mcp_config_for_agent(
+    workspace_dir: Path, agent: str, tracker: StepTracker
+) -> bool:
+    """Install MCP config for a specific agent."""
+    if agent == "claude":
+        return _install_claude_mcp_config(workspace_dir, tracker)
+    elif agent == "gemini":
+        return _install_gemini_mcp_config(workspace_dir, tracker)
+    elif agent == "opencode":
+        return _install_opencode_mcp_config(workspace_dir, tracker)
+    else:
+        # Cursor doesn't support MCP
+        return False
+
+
+def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
+    """Install MCP config for Claude Code (workspace-local)."""
+    template_dir = get_template_dir()
+    template_path = template_dir / "mcp_config.json"
+
+    if not template_path.exists():
+        tracker.add_warning("MCP config template not found")
+        return False
+
+    # Read template
+    template_content = template_path.read_text()
+
+    # Substitute workspace path
+    config_content = template_content.replace(
+        "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
+    )
+
+    # Write to Claude's workspace-local config
+    config_dir = workspace_dir / ".claude"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / "mcp_config.json"
+
+    config_path.write_text(config_content)
+    return True
+
+
+def _install_gemini_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
+    """Install MCP config for Gemini CLI (global settings.json merge)."""
+    import json as json_module
+
+    # Gemini uses global settings file
+    settings_path = Path.home() / ".gemini" / "settings.json"
+    settings_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Read existing settings or create new
+    if settings_path.exists():
+        try:
+            settings = json_module.loads(settings_path.read_text())
+        except json_module.JSONDecodeError:
+            settings = {}
+    else:
+        settings = {}
+
+    # Ensure mcpServers exists
+    if "mcpServers" not in settings:
+        settings["mcpServers"] = {}
+
+    # Add/update cortext server entry
+    settings["mcpServers"]["cortext"] = {
+        "command": "cortext-mcp",
+        "args": [],
+        "env": {"WORKSPACE_PATH": str(workspace_dir.absolute())},
+        "trust": True,
+    }
+
+    # Write back
+    settings_path.write_text(json_module.dumps(settings, indent=2))
+    return True
+
+
+def _install_opencode_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
+    """Install MCP config for OpenCode (workspace-local)."""
+    template_dir = get_template_dir()
+    template_path = template_dir / "mcp_config.json"
+
+    if not template_path.exists():
+        tracker.add_warning("MCP config template not found")
+        return False
+
+    # Read template
+    template_content = template_path.read_text()
+
+    # Substitute workspace path
+    config_content = template_content.replace(
+        "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
+    )
+
+    # Write to OpenCode's workspace-local config
+    config_dir = workspace_dir / ".opencode"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = config_dir / "mcp_config.json"
+
+    config_path.write_text(config_content)
+    return True

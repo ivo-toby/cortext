@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### RAG Tools in MCP Server
+- **Semantic Search via MCP**: AI agents can now use semantic search tools through MCP
+  - `embed_document` - Embed specific documents/conversations for semantic search
+  - `embed_workspace` - Embed entire workspace content
+  - `search_semantic` - Semantic search using embeddings (finds conceptually similar content)
+  - `get_similar` - Find documents similar to a given source
+  - `get_embedding_status` - Get workspace embedding statistics
+- **5 new MCP tools** available alongside existing keyword search tools
+- **Automatic fallback**: RAG tools gracefully unavailable if dependencies missing
+
+#### Automatic MCP Configuration
+- **Interactive MCP setup during init**: Users are prompted to configure MCP server
+  - Default: Yes (user can press Enter to accept)
+  - Can be skipped with response "n"
+  - Explains how to add later with `cortext mcp install`
+- **Command-line flags for automation**:
+  - `--mcp` flag to explicitly enable MCP configuration
+  - `--no-mcp` flag to skip MCP setup
+  - Flags take precedence over interactive prompt
+- **Multi-agent support**:
+  - Claude Code: Workspace-local `.claude/mcp_config.json`
+  - Gemini CLI: Global `~/.gemini/settings.json` with merge logic
+  - OpenCode: Workspace-local `.opencode/mcp_config.json`
+- **Workspace path substitution**: Configs include absolute workspace path in `WORKSPACE_PATH` env var
+- **Validation**: Checks if `cortext-mcp` command is available (warns but continues if missing)
+
+#### `cortext mcp install` Command
+- **Post-init MCP configuration**: Add MCP to existing workspaces
+- **Agent detection**: Automatically detects which agents are configured
+- **Selective configuration**: `--ai <agent>` flag to configure specific agent only
+- **Force overwrite**: `--force` flag to update existing configurations
+- **Gemini settings merge**: Preserves existing settings when adding MCP config
+- **Clear output**: Shows which agents were configured and config file paths
+- **Error handling**: Validates workspace, checks for agents, warns if MCP command missing
+
+### Changed
+
+#### Updated Documentation
+- **mcp-server.md**: Complete documentation of 8 MCP tools (3 keyword + 5 RAG)
+  - Automatic vs manual configuration instructions
+  - Tool schemas and examples for all RAG tools
+  - Troubleshooting section for MCP and RAG issues
+- **README.md**: Added MCP Server section with quick setup guide
+- **CLI help**: Added `cortext mcp install` to command list
+
 ### Fixed
 
 #### Gemini CLI Independent Configuration
