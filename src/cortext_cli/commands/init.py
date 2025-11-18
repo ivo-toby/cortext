@@ -785,27 +785,39 @@ def _install_mcp_config_for_agent(
 
 
 def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
-    """Install MCP config for Claude Code (project root .mcp.json)."""
-    template_dir = get_template_dir()
-    template_path = template_dir / "mcp_config.json"
+    """Install MCP config for Claude Code using 'claude mcp add' command."""
+    # Try to register the MCP server using claude CLI
+    try:
+        # Check if claude CLI is available
+        result = subprocess.run(
+            ["claude", "mcp", "add", "--transport", "stdio", "--scope", "local",
+             "cortext", "--", "cortext-mcp"],
+            cwd=workspace_dir,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
 
-    if not template_path.exists():
-        tracker.add_warning("MCP config template not found")
+        if result.returncode == 0:
+            tracker.add_step("Registered cortext-mcp with Claude Code")
+            return True
+        elif "already exists" in result.stderr.lower():
+            tracker.add_info("MCP server already registered with Claude Code")
+            return True
+        else:
+            # Fall back to instructions
+            tracker.add_warning(
+                "Could not auto-register MCP server. "
+                f"Run: claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+            )
+            return False
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
+        # Claude CLI not available or command failed
+        tracker.add_warning(
+            "Claude CLI not available. To enable MCP server, run:\n"
+            "  claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+        )
         return False
-
-    # Read template
-    template_content = template_path.read_text()
-
-    # Substitute workspace path
-    config_content = template_content.replace(
-        "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
-    )
-
-    # Write to project root as .mcp.json (Claude Code standard location)
-    config_path = workspace_dir / ".mcp.json"
-
-    config_path.write_text(config_content)
-    return True
 
 
 def _install_gemini_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:

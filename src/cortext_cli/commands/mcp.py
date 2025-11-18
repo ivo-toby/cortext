@@ -96,8 +96,11 @@ def mcp_install(
         for agent in configured:
             action = "reconfigured" if force else "configured"
             console.print(f"[green]✓[/green] MCP server {action} for: [cyan]{agent.title()}[/cyan]")
-            config_path = _get_config_path(workspace_dir, agent)
-            console.print(f"  [dim]Config: {config_path}[/dim]")
+            if agent == "claude":
+                console.print(f"  [dim]Registered via: claude mcp add[/dim]")
+            else:
+                config_path = _get_config_path(workspace_dir, agent)
+                console.print(f"  [dim]Config: {config_path}[/dim]")
 
     if already_configured:
         console.print()
@@ -151,14 +154,27 @@ def _check_mcp_command() -> bool:
 
 def _check_mcp_config_exists(workspace_dir: Path, agent: str) -> bool:
     """Check if MCP config already exists for an agent."""
-    config_path = _get_config_path(workspace_dir, agent)
-    return config_path.exists() if config_path else False
+    if agent == "claude":
+        # Check if server is registered with Claude CLI
+        try:
+            result = subprocess.run(
+                ["claude", "mcp", "get", "cortext"],
+                capture_output=True,
+                timeout=5,
+            )
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return False
+    else:
+        config_path = _get_config_path(workspace_dir, agent)
+        return config_path.exists() if config_path else False
 
 
 def _get_config_path(workspace_dir: Path, agent: str) -> Optional[Path]:
     """Get the config path for a specific agent."""
     if agent == "claude":
-        return workspace_dir / ".mcp.json"
+        # Claude uses CLI registration, not config file
+        return None
     elif agent == "gemini":
         return Path.home() / ".gemini" / "settings.json"
     elif agent == "opencode":
@@ -178,26 +194,40 @@ def _install_mcp_config_for_agent(workspace_dir: Path, agent: str) -> bool:
 
 
 def _install_claude_mcp_config(workspace_dir: Path) -> bool:
-    """Install MCP config for Claude Code (project root .mcp.json)."""
-    template_dir = get_template_dir()
-    template_path = template_dir / "mcp_config.json"
+    """Install MCP config for Claude Code using 'claude mcp add' command."""
+    import subprocess
 
-    if not template_path.exists():
+    # Try to register the MCP server using claude CLI
+    try:
+        # Check if claude CLI is available
+        result = subprocess.run(
+            ["claude", "mcp", "add", "--transport", "stdio", "--scope", "local",
+             "cortext", "--", "cortext-mcp"],
+            cwd=workspace_dir,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if result.returncode == 0:
+            return True
+        elif "already exists" in result.stderr.lower():
+            # Already registered - still success
+            return True
+        else:
+            console.print(
+                f"[yellow]Could not auto-register MCP server.[/yellow]\n"
+                f"[dim]Run: claude mcp add --transport stdio --scope local cortext -- cortext-mcp[/dim]"
+            )
+            return False
+    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
+        # Claude CLI not available or command failed
+        console.print(
+            "[yellow]Claude CLI not available.[/yellow]\n"
+            "[dim]To enable MCP server, run:[/dim]\n"
+            "  claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+        )
         return False
-
-    # Read template
-    template_content = template_path.read_text()
-
-    # Substitute workspace path
-    config_content = template_content.replace(
-        "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
-    )
-
-    # Write to project root as .mcp.json (Claude Code standard location)
-    config_path = workspace_dir / ".mcp.json"
-
-    config_path.write_text(config_content)
-    return True
 
 
 def _install_gemini_mcp_config(workspace_dir: Path) -> bool:

@@ -40,8 +40,8 @@ cortext init --ai claude --no-mcp  # Skip MCP configuration
 cortext init --ai all --mcp
 ```
 
-The MCP server is configured at:
-- **Claude Code**: `.mcp.json` (project root)
+The MCP server is registered as follows:
+- **Claude Code**: Via `claude mcp add` command (local scope)
 - **Gemini CLI**: `~/.gemini/settings.json` (global)
 - **OpenCode**: `.opencode/mcp_config.json` (workspace-local)
 
@@ -60,23 +60,28 @@ cortext mcp install --ai claude
 cortext mcp install --force
 ```
 
-### Configuration Format
+### Configuration Details
 
-For Claude Code (`.mcp.json` at project root):
+#### Claude Code
 
-```json
-{
-  "mcpServers": {
-    "cortext": {
-      "command": "cortext-mcp",
-      "args": [],
-      "env": {
-        "WORKSPACE_PATH": "/absolute/path/to/workspace"
-      }
-    }
-  }
-}
+Claude Code requires MCP servers to be registered via the CLI:
+
+```bash
+# Register cortext-mcp server (local scope)
+claude mcp add --transport stdio --scope local cortext -- cortext-mcp
+
+# Verify registration
+claude mcp list
+
+# View server details
+claude mcp get cortext
 ```
+
+The server will be available in all Claude Code sessions once registered.
+
+**Note**: The `cortext init --mcp` command attempts to run this registration automatically. If it fails (e.g., Claude CLI not available), you'll see instructions to run the command manually.
+
+#### OpenCode
 
 For OpenCode (`.opencode/mcp_config.json`):
 
@@ -93,6 +98,8 @@ For OpenCode (`.opencode/mcp_config.json`):
   }
 }
 ```
+
+#### Gemini CLI
 
 For Gemini CLI (`~/.gemini/settings.json`):
 
