@@ -36,20 +36,48 @@ class CortextMCPServer:
         self.conversation_types = self._load_conversation_types()
 
     def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle incoming MCP request."""
+        """Handle incoming MCP request (JSON-RPC 2.0 format)."""
+        request_id = request.get("id")
         method = request.get("method")
         params = request.get("params", {})
 
-        if method == "tools/list":
-            return self.list_tools()
-        elif method == "tools/call":
-            tool_name = params.get("name")
-            arguments = params.get("arguments", {})
-            return self.call_tool(tool_name, arguments)
-        elif method == "initialize":
-            return self.initialize()
-        else:
-            return {"error": f"Unknown method: {method}"}
+        try:
+            if method == "initialize":
+                result = self.initialize()
+            elif method == "tools/list":
+                result = self.list_tools()
+            elif method == "tools/call":
+                tool_name = params.get("name")
+                arguments = params.get("arguments", {})
+                result = self.call_tool(tool_name, arguments)
+            else:
+                # Return JSON-RPC error for unknown method
+                return {
+                    "jsonrpc": "2.0",
+                    "id": request_id,
+                    "error": {
+                        "code": -32601,
+                        "message": f"Method not found: {method}"
+                    }
+                }
+
+            # Return JSON-RPC success response
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "result": result
+            }
+
+        except Exception as e:
+            # Return JSON-RPC error response
+            return {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                }
+            }
 
     def initialize(self) -> dict[str, Any]:
         """Initialize the MCP server."""
@@ -486,19 +514,44 @@ class CortextMCPServer:
 
 def main():
     """Main entry point for the MCP server."""
-    server = CortextMCPServer()
+    import os
+
+    # Get workspace path from environment variable or use current directory
+    workspace_path = os.environ.get("WORKSPACE_PATH")
+    if workspace_path:
+        workspace_path = Path(workspace_path)
+    else:
+        workspace_path = Path.cwd()
+
+    server = CortextMCPServer(workspace_path)
 
     # Read from stdin and write to stdout (MCP protocol)
     for line in sys.stdin:
         try:
             request = json.loads(line)
             response = server.handle_request(request)
-            print(json.dumps(response), flush=True)
+            # Only send response if request had an id (not a notification)
+            if request.get("id") is not None:
+                print(json.dumps(response), flush=True)
         except json.JSONDecodeError:
-            error_response = {"error": "Invalid JSON request"}
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {
+                    "code": -32700,
+                    "message": "Parse error: Invalid JSON"
+                }
+            }
             print(json.dumps(error_response), flush=True)
         except Exception as e:
-            error_response = {"error": str(e)}
+            error_response = {
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {
+                    "code": -32603,
+                    "message": f"Internal error: {str(e)}"
+                }
+            }
             print(json.dumps(error_response), flush=True)
 
 
