@@ -785,7 +785,7 @@ def _install_mcp_config_for_agent(
 
 
 def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
-    """Install MCP config for Claude Code (workspace-local)."""
+    """Install MCP config for Claude Code (project root .mcp.json)."""
     template_dir = get_template_dir()
     template_path = template_dir / "mcp_config.json"
 
@@ -801,10 +801,8 @@ def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
         "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
     )
 
-    # Write to Claude's workspace-local config
-    config_dir = workspace_dir / ".claude"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_path = config_dir / "mcp_config.json"
+    # Write to project root as .mcp.json (Claude Code standard location)
+    config_path = workspace_dir / ".mcp.json"
 
     config_path.write_text(config_content)
     return True

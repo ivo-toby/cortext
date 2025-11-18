@@ -46,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### Claude Code MCP Configuration Location
+- **Fixed MCP config location for Claude Code**: Changed from `.claude/mcp_config.json` to `.mcp.json` (project root)
+  - Claude Code expects MCP configuration at `.mcp.json` in project root
+  - Updated both `init` and `mcp install` commands
+  - Updated all tests and documentation
+  - This is the standard MCP config location per Claude Code documentation
+
 #### Updated Documentation
 - **mcp-server.md**: Complete documentation of 8 MCP tools (3 keyword + 5 RAG)
   - Automatic vs manual configuration instructions

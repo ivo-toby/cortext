@@ -34,7 +34,7 @@ class TestMCPInit:
         assert result.exit_code == 0
 
         # Check MCP config was created
-        mcp_config = workspace / ".claude" / "mcp_config.json"
+        mcp_config = workspace / ".mcp.json"
         assert mcp_config.exists()
 
         # Verify config content
@@ -58,7 +58,7 @@ class TestMCPInit:
         assert result.exit_code == 0
 
         # Check MCP config was NOT created
-        mcp_config = workspace / ".claude" / "mcp_config.json"
+        mcp_config = workspace / ".mcp.json"
         assert not mcp_config.exists()
 
         # Prompt should not have been shown (flag takes precedence)
@@ -77,7 +77,7 @@ class TestMCPInit:
         mock_confirm.assert_called_once()
 
         # Check MCP config was created
-        mcp_config = workspace / ".claude" / "mcp_config.json"
+        mcp_config = workspace / ".mcp.json"
         assert mcp_config.exists()
 
     @patch("cortext_cli.commands.init.Confirm.ask", return_value=False)
@@ -93,7 +93,7 @@ class TestMCPInit:
         mock_confirm.assert_called_once()
 
         # Check MCP config was NOT created
-        mcp_config = workspace / ".claude" / "mcp_config.json"
+        mcp_config = workspace / ".mcp.json"
         assert not mcp_config.exists()
 
     @patch("cortext_cli.commands.init.Confirm.ask", return_value=True)
@@ -106,7 +106,7 @@ class TestMCPInit:
         assert result.exit_code == 0
 
         # Check MCP configs for all agents
-        claude_config = workspace / ".claude" / "mcp_config.json"
+        claude_config = workspace / ".mcp.json"
         assert claude_config.exists()
 
         opencode_config = workspace / ".opencode" / "mcp_config.json"
@@ -127,7 +127,7 @@ class TestMCPInit:
 
         assert result.exit_code == 0
 
-        mcp_config = workspace / ".claude" / "mcp_config.json"
+        mcp_config = workspace / ".mcp.json"
         config = json.loads(mcp_config.read_text())
 
         # Check workspace path is absolute and correct

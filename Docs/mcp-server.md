@@ -41,7 +41,7 @@ cortext init --ai all --mcp
 ```
 
 The MCP server is configured at:
-- **Claude Code**: `.claude/mcp_config.json` (workspace-local)
+- **Claude Code**: `.mcp.json` (project root)
 - **Gemini CLI**: `~/.gemini/settings.json` (global)
 - **OpenCode**: `.opencode/mcp_config.json` (workspace-local)
 
@@ -62,7 +62,23 @@ cortext mcp install --force
 
 ### Configuration Format
 
-For workspace-local configs (Claude, OpenCode):
+For Claude Code (`.mcp.json` at project root):
+
+```json
+{
+  "mcpServers": {
+    "cortext": {
+      "command": "cortext-mcp",
+      "args": [],
+      "env": {
+        "WORKSPACE_PATH": "/absolute/path/to/workspace"
+      }
+    }
+  }
+}
+```
+
+For OpenCode (`.opencode/mcp_config.json`):
 
 ```json
 {
@@ -251,9 +267,10 @@ echo '{"method":"tools/list","params":{}}' | cortext-mcp
 - Check PATH includes the installation bin directory
 
 **MCP not connecting:**
-- Verify configuration: Check `.claude/mcp_config.json` or equivalent
-- Run `cortext mcp install` to reconfigure
+- Verify configuration: Check `.mcp.json` (Claude) or agent-specific config
+- Run `cortext mcp install --force` to reconfigure
 - Check `cortext-mcp` is in PATH: `which cortext-mcp`
+- Restart your AI agent after adding config
 
 **Keyword search not working:**
 - Install ripgrep: `brew install ripgrep` or equivalent

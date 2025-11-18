@@ -158,7 +158,7 @@ def _check_mcp_config_exists(workspace_dir: Path, agent: str) -> bool:
 def _get_config_path(workspace_dir: Path, agent: str) -> Optional[Path]:
     """Get the config path for a specific agent."""
     if agent == "claude":
-        return workspace_dir / ".claude" / "mcp_config.json"
+        return workspace_dir / ".mcp.json"
     elif agent == "gemini":
         return Path.home() / ".gemini" / "settings.json"
     elif agent == "opencode":
@@ -178,7 +178,7 @@ def _install_mcp_config_for_agent(workspace_dir: Path, agent: str) -> bool:
 
 
 def _install_claude_mcp_config(workspace_dir: Path) -> bool:
-    """Install MCP config for Claude Code (workspace-local)."""
+    """Install MCP config for Claude Code (project root .mcp.json)."""
     template_dir = get_template_dir()
     template_path = template_dir / "mcp_config.json"
 
@@ -193,10 +193,8 @@ def _install_claude_mcp_config(workspace_dir: Path) -> bool:
         "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
     )
 
-    # Write to Claude's workspace-local config
-    config_dir = workspace_dir / ".claude"
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_path = config_dir / "mcp_config.json"
+    # Write to project root as .mcp.json (Claude Code standard location)
+    config_path = workspace_dir / ".mcp.json"
 
     config_path.write_text(config_content)
     return True

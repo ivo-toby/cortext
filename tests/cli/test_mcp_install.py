@@ -72,7 +72,7 @@ class TestMCPInstall:
         assert result.exit_code == 0
 
         # Check configs were created
-        claude_config = workspace / ".claude" / "mcp_config.json"
+        claude_config = workspace / ".mcp.json"
         assert claude_config.exists()
 
         # Verify config content
@@ -88,14 +88,13 @@ class TestMCPInstall:
         assert result.exit_code == 0
 
         # Check only Claude config was created
-        claude_config = workspace / ".claude" / "mcp_config.json"
+        claude_config = workspace / ".mcp.json"
         assert claude_config.exists()
 
     def test_mcp_install_preserves_existing(self, workspace):
         """Test mcp install preserves existing configs."""
         # Create existing config
-        claude_config = workspace / ".claude" / "mcp_config.json"
-        claude_config.parent.mkdir(parents=True, exist_ok=True)
+        claude_config = workspace / ".mcp.json"
         claude_config.write_text('{"existing": "config"}')
 
         with patch("cortext_cli.commands.mcp.Path.cwd", return_value=workspace):
@@ -111,8 +110,7 @@ class TestMCPInstall:
     def test_mcp_install_force_overwrites(self, workspace):
         """Test mcp install --force overwrites existing configs."""
         # Create existing config
-        claude_config = workspace / ".claude" / "mcp_config.json"
-        claude_config.parent.mkdir(parents=True, exist_ok=True)
+        claude_config = workspace / ".mcp.json"
         claude_config.write_text('{"existing": "config"}')
 
         with patch("cortext_cli.commands.mcp.Path.cwd", return_value=workspace):
