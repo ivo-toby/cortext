@@ -250,6 +250,70 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 
 **Command**: `/workspace.review` or `.workspace/scripts/bash/review.sh "Title"`
 
+### Project Manage
+
+**Purpose**: Ongoing project tracking with multi-document architecture
+
+**Use when**:
+
+- Managing a project over time
+- Tracking tasks, goals, and status
+- Organizing project documentation (requirements, decisions, notes)
+- Need a central hub for project information
+
+**Key Features**:
+
+- **Multi-document architecture**: Creates and organizes multiple documents in subfolders
+- **Auto-maintained index**: `index.md` automatically tracks all project documents
+- **Proactive context search**: AI searches workspace for relevant existing information
+- **Flexible categorization**: AI categorizes documents based on content (requirements, decisions, notes, research)
+
+**Sections**: Goals, Roadmap, Tasks, Status Updates
+
+**Directory Structure**:
+```
+projectmanage/2025-11-20/001-projectmanage-my-project/
+├── project-management.md    # Master status document
+├── index.md                 # Auto-maintained document index
+└── docs/
+    ├── requirements/        # Requirements documents
+    ├── decisions/           # Decision records
+    ├── notes/               # Meeting notes, research notes
+    └── research/            # Technical research
+```
+
+**Command**: `/workspace.projectmanage` or `.workspace/scripts/bash/projectmanage.sh "Project"`
+
+**Example Interactions**:
+
+```
+User: "Let's discuss the authentication system"
+Claude: *Searches workspace for "authentication"*
+        "I found some relevant context in your workspace:
+        - A brainstorm session from last week explored OAuth options
+        - There's a decision about session-based auth
+        Would you like me to incorporate this into our project docs?"
+
+User: "We decided to use PostgreSQL for the database"
+Claude: *Creates docs/decisions/database-selection.md*
+        *Updates index.md*
+        "I've documented that decision. Should I capture the reasoning?"
+
+User: "What's our current status?"
+Claude: "Here's an overview:
+        - Goals: 3 defined, 1 achieved
+        - Active tasks: 5 in progress
+        - Recent updates: Completed hooks system yesterday
+        See index.md for all 12 project documents."
+```
+
+**Best Practices**:
+
+- Use Project Manage for ongoing execution tracking (use Plan for initial design)
+- Let the AI categorize documents - it will ask for confirmation if unsure
+- Review the index regularly to maintain overview
+- Reference past decisions when making new ones
+
 ---
 
 ## The Constitution
@@ -555,8 +619,11 @@ Match the conversation type to your goal:
 
 - Ideation → Brainstorm
 - Bug fixing → Debug
-- Planning → Plan
+- Initial design → Plan
+- Ongoing project tracking → Project Manage
 - Learning → Learn
+- Meeting notes → Meeting
+- Code review → Review
 
 ### 5. Document Decisions
 

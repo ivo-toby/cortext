@@ -22,6 +22,7 @@ DEFAULT_CONVERSATION_TYPES = {
     "learn": "learn",
     "meeting": "meeting",
     "plan": "plan",
+    "projectmanage": "projectmanage",
     "review": "review",
 }
 

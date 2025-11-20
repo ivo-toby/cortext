@@ -8,7 +8,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 
 ## ✨ Features
 
-- **📝 Structured Conversations** - Templates for brainstorming, debugging, planning, learning, meetings, and reviews
+- **📝 Structured Conversations** - Templates for brainstorming, debugging, planning, learning, meetings, reviews, and project management
 - **🔄 Git-Based** - Every conversation and decision tracked in version control
 - **🤖 Multi-AI Support** - Works with Claude Code, OpenCode, Gemini CLI, Cursor, and more
 - **🧠 Persistent Memory** - Personal constitution defines your working style across all tools
@@ -71,12 +71,13 @@ claude
 Once your workspace is initialized, Claude Code will have access to conversation commands:
 
 ```
-/workspace.brainstorm    Start an ideation session
-/workspace.debug         Debug a problem systematically
-/workspace.plan          Plan a feature or project
-/workspace.learn         Document learning and take notes
-/workspace.meeting       Capture meeting notes and actions
-/workspace.review        Conduct code or design reviews
+/workspace.brainstorm      Start an ideation session
+/workspace.debug           Debug a problem systematically
+/workspace.plan            Plan a feature or project
+/workspace.learn           Document learning and take notes
+/workspace.meeting         Capture meeting notes and actions
+/workspace.review          Conduct code or design reviews
+/workspace.projectmanage   Manage project with multi-document tracking
 ```
 
 ### MCP Server (AI Agent Integration)
@@ -124,6 +125,7 @@ Agents can now search past conversations, find related discussions, and build on
 ├── learn/                  # Learning notes
 ├── meeting/                # Meeting notes
 ├── plan/                   # Planning sessions
+├── projectmanage/          # Project management (with docs/ and index.md)
 ├── review/                 # Code reviews
 ├── research/               # Research projects
 ├── ideas/                  # Unstructured ideation
@@ -163,6 +165,7 @@ Built-in types:
 - **Learn** - Learning documentation
 - **Meeting** - Meeting notes with action items
 - **Review** - Code/design reviews
+- **Project Manage** - Project tracking with multi-document architecture, proactive context search, and auto-maintained index
 
 ### Git Workflow
 
