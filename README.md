@@ -14,6 +14,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 - **🧠 Persistent Memory** - Personal constitution defines your working style across all tools
 - **🔍 RAG Search** - Semantic search across all conversations using local embeddings
 - **🎯 Workflow Automation** - Bash scripts and slash commands for repeatable processes
+- **🪝 Event Hooks** - Extensible automation triggered on workspace events
 
 ---
 
@@ -108,6 +109,9 @@ Agents can now search past conversations, find related discussions, and build on
 │   │   ├── constitution.md  # Your working principles
 │   │   ├── context.md      # Current focus areas
 │   │   └── decisions.md    # Decision log
+│   ├── hooks/              # Event-driven automation
+│   │   ├── conversation/   # Conversation lifecycle hooks
+│   │   └── git/            # Git hook integrations
 │   ├── scripts/            # Automation scripts
 │   ├── templates/          # Conversation templates
 │   └── registry.json       # Conversation type registry
@@ -202,6 +206,42 @@ Features:
 - **Multi-format** - Markdown, PDF, Word, HTML, plain text
 
 See **[RAG Guide](Docs/rag-guide.md)** for complete documentation.
+
+### Hooks System
+
+Event-driven automation that runs on workspace events like conversation creation or git commits.
+
+```bash
+# List all configured hooks
+cortext hooks list
+
+# Manually run a hook event
+cortext hooks run conversation:create /path/to/conv
+
+# Add a custom hook
+cortext hooks add conversation:create my-notification
+
+# Install git hooks (done automatically during init)
+cortext hooks install
+```
+
+**Built-in Events:**
+- `conversation:create` - After a conversation is created
+- `conversation:archive` - When archiving a conversation
+- `pre-commit` - Before git commit (embeds staged files)
+- `post-checkout` - After git checkout
+
+**Custom Hooks:**
+Add your own automation by creating scripts in `.workspace/hooks/`:
+```
+.workspace/hooks/conversation/on-create.d/
+├── 10-embed.sh          # Default: embed for RAG
+└── 50-my-hook.sh        # Your custom automation
+```
+
+Scripts run in alphanumeric order. Use numeric prefixes (10-39 core, 40-69 user, 70-99 cleanup).
+
+See **[Hooks Guide](Docs/hooks.md)** for complete documentation.
 
 ---
 

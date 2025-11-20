@@ -69,10 +69,8 @@ Purpose: Feature and project planning
 # Create conversation tag
 create_conversation_tag "$CONVERSATION_NAME"
 
-# Auto-embed for RAG (if available)
-if [ -f "${SCRIPT_DIR}/auto-embed.sh" ]; then
-    "${SCRIPT_DIR}/auto-embed.sh" "$CONVERSATION_DIR" 2>/dev/null || true
-fi
+# Dispatch conversation:create hook
+dispatch_hook "conversation:create" "$CONVERSATION_DIR"
 
 # Display summary
 echo "" >&2

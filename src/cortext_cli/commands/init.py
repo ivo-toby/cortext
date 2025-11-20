@@ -22,6 +22,7 @@ from cortext_cli.utils import (
     StepTracker,
     get_commands_dir,
     get_git_hooks_dir,
+    get_hooks_dir,
     get_scripts_dir,
     get_template_dir,
 )
@@ -160,6 +161,9 @@ def init(
         # Copy scripts
         copy_scripts(workspace_dir, tracker)
 
+        # Copy hooks
+        copy_hooks(workspace_dir, tracker)
+
         # Configure AI tools
         configure_ai_tools(workspace_dir, ai, tracker)
 
@@ -234,6 +238,11 @@ def create_workspace_structure(workspace_dir: Path, tracker: StepTracker):
         workspace_config / "scripts" / "powershell",
         workspace_config / "templates",
         workspace_config / "exports",
+        workspace_config / "hooks" / "conversation" / "on-create.d",
+        workspace_config / "hooks" / "conversation" / "on-archive.d",
+        workspace_config / "hooks" / "git" / "pre-commit.d",
+        workspace_config / "hooks" / "git" / "post-checkout.d",
+        workspace_config / "docs",
         workspace_dir / "research",
         workspace_dir / "ideas",
         workspace_dir / "notes",
@@ -242,6 +251,21 @@ def create_workspace_structure(workspace_dir: Path, tracker: StepTracker):
 
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
+
+    # Create .gitignore for workspace
+    gitignore_path = workspace_dir / ".gitignore"
+    if not gitignore_path.exists():
+        gitignore_content = """# Cortext workspace ignores
+
+# RAG/Embeddings data (regenerated from source)
+.cortext_rag/
+.workspace/embeddings/
+
+# OS files
+.DS_Store
+Thumbs.db
+"""
+        gitignore_path.write_text(gitignore_content)
 
     tracker.add_step("Created directory structure")
 
@@ -303,6 +327,62 @@ def copy_scripts(workspace_dir: Path, tracker: StepTracker):
         tracker.add_step(f"Copied {scripts_copied} scripts")
     else:
         tracker.add_info("No scripts found to copy")
+
+
+def copy_hooks(workspace_dir: Path, tracker: StepTracker):
+    """Copy hook scripts to workspace."""
+    hooks_dir = get_hooks_dir()
+    dest_hooks = workspace_dir / ".workspace" / "hooks"
+
+    if not hooks_dir.exists():
+        tracker.add_warning("Hooks directory not found, skipping hooks")
+        return
+
+    hooks_copied = 0
+
+    # Copy dispatcher
+    dispatcher_src = hooks_dir / "dispatch.sh"
+    if dispatcher_src.exists():
+        dispatcher_dest = dest_hooks / "dispatch.sh"
+        shutil.copy2(dispatcher_src, dispatcher_dest)
+        if os.name != "nt":
+            os.chmod(dispatcher_dest, 0o755)
+        hooks_copied += 1
+
+    # Copy hook scripts from subdirectories
+    for category in ["conversation", "git"]:
+        category_src = hooks_dir / category
+        if not category_src.exists():
+            continue
+
+        for event_dir in category_src.iterdir():
+            if not event_dir.is_dir():
+                continue
+
+            dest_event_dir = dest_hooks / category / event_dir.name
+            dest_event_dir.mkdir(parents=True, exist_ok=True)
+
+            for script in event_dir.glob("*.sh"):
+                dest_script = dest_event_dir / script.name
+                shutil.copy2(script, dest_script)
+                if os.name != "nt":
+                    os.chmod(dest_script, 0o755)
+                hooks_copied += 1
+
+    if hooks_copied > 0:
+        tracker.add_step(f"Copied {hooks_copied} hook scripts")
+    else:
+        tracker.add_info("No hooks found to copy")
+
+    # Copy hooks documentation
+    template_dir = get_template_dir()
+    hooks_doc_src = template_dir / "hooks.md"
+    if hooks_doc_src.exists():
+        docs_dir = workspace_dir / ".workspace" / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        hooks_doc_dest = docs_dir / "hooks.md"
+        shutil.copy2(hooks_doc_src, hooks_doc_dest)
+        tracker.add_step("Created hooks documentation")
 
 
 def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
@@ -650,7 +730,7 @@ Template for new decisions:
 
 
 def install_git_hooks(workspace_dir: Path, tracker: StepTracker):
-    """Install git hooks for auto-embedding."""
+    """Install git hooks that integrate with Cortext hooks system."""
     git_hooks_src = get_git_hooks_dir()
     git_hooks_dest = workspace_dir / ".git" / "hooks"
 
@@ -663,35 +743,38 @@ def install_git_hooks(workspace_dir: Path, tracker: StepTracker):
         return
 
     hooks_installed = 0
+    hooks_to_install = ["pre-commit", "post-checkout"]
 
-    # Install post-commit hook for auto-embedding
-    post_commit_src = git_hooks_src / "post-commit"
-    if post_commit_src.exists():
-        post_commit_dest = git_hooks_dest / "post-commit"
+    for hook_name in hooks_to_install:
+        src_file = git_hooks_src / hook_name
+        if not src_file.exists():
+            continue
 
-        # Check if hook already exists
-        if post_commit_dest.exists():
-            # Append our hook if not already present
-            existing_content = post_commit_dest.read_text()
-            if "cortext embed" not in existing_content:
-                with open(post_commit_dest, "a") as f:
-                    f.write("\n\n# Cortext auto-embed hook\n")
-                    f.write(post_commit_src.read_text())
-                hooks_installed += 1
-            else:
-                tracker.add_info("Post-commit hook already has auto-embed")
+        dest_file = git_hooks_dest / hook_name
+
+        if dest_file.exists():
+            # Check if it's already our hook
+            content = dest_file.read_text()
+            if "Cortext" in content:
+                continue  # Already installed
+
+            # Append to existing hook
+            with open(dest_file, "a") as f:
+                f.write("\n\n# --- Cortext hooks integration ---\n")
+                f.write(src_file.read_text())
         else:
             # Copy the hook
-            shutil.copy2(post_commit_src, post_commit_dest)
-            # Make executable
-            if os.name != "nt":
-                os.chmod(post_commit_dest, 0o755)
-            hooks_installed += 1
+            shutil.copy2(src_file, dest_file)
+
+        # Make executable
+        if os.name != "nt":
+            os.chmod(dest_file, 0o755)
+        hooks_installed += 1
 
     if hooks_installed > 0:
-        tracker.add_step(f"Installed {hooks_installed} git hook(s) for auto-embedding")
+        tracker.add_step(f"Installed {hooks_installed} git hook(s)")
     else:
-        tracker.add_info("No git hooks to install")
+        tracker.add_info("Git hooks already installed")
 
 
 def configure_mcp(
