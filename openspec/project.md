@@ -134,15 +134,18 @@ Additional context or metadata.
 - `[workspace]` - Workspace structure changes
 
 **Branch Strategy**:
-- `main` - Stable, production-ready code
-- `conversation/*` - User conversations (auto-created per conversation)
+- `main` - All conversation commits go directly to main
 - `feature/*` - Development features (for project development)
 
 **Workflow**:
-1. All development happens on feature branches
-2. User conversations get isolated `conversation/*` branches
+1. All conversations commit directly to main branch
+2. Git tags mark conversation start points (`conv/{ID}`)
 3. Atomic commits with clear, searchable messages
-4. Merge to main when work is complete
+4. Users can create manual branches for isolation when needed
+
+**Tag Format**:
+- `conv/{CONVERSATION_ID}` - e.g., `conv/001-brainstorm-new-feature`
+- List tags: `git tag -l "conv/*" --sort=-creatordate`
 
 ### File Organization
 

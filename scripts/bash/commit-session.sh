@@ -14,34 +14,27 @@ WORKSPACE_ROOT=$(get_workspace_root)
 # Check if git is initialized
 check_git_initialized
 
-# Get current branch
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
-
-if [ -z "$BRANCH_NAME" ] || [ "$BRANCH_NAME" = "main" ]; then
-    print_warning "Not on a conversation branch, nothing to commit"
-    exit 0
-fi
-
 # Check if there are changes
 if git diff --quiet && git diff --cached --quiet; then
     print_info "No changes to commit"
     exit 0
 fi
 
-# Extract conversation info from branch name
-CONV_ID=$(echo "$BRANCH_NAME" | sed 's|^conversation/||')
-CONV_TYPE=$(echo "$CONV_ID" | grep -oE '[0-9]+-([a-z]+)-' | sed 's/-$//' | sed 's/^[0-9]*-//')
-
-print_step "Committing session for: ${CONV_ID}"
-
 # Add all changes in conversations directory
 CONVERSATIONS_DIR="${WORKSPACE_ROOT}/../conversations"
 git add "${CONVERSATIONS_DIR}" 2>/dev/null || true
 
-# Create commit message
-COMMIT_MSG="[conversation] Update ${CONV_TYPE} session
+# Check if anything was staged
+if git diff --cached --quiet; then
+    print_info "No conversation changes to commit"
+    exit 0
+fi
 
-Conversation: ${CONV_ID}
+print_step "Committing conversation session..."
+
+# Create commit message
+COMMIT_MSG="[conversation] Update session
+
 Auto-commit from session"
 
 # Commit
