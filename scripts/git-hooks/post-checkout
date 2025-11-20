@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Cortext post-checkout hook
+# Dispatches post-checkout event to hook system
+
+# Find workspace root
+WORKSPACE_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$WORKSPACE_ROOT" ]; then
+    exit 0
+fi
+
+# Call dispatcher if it exists
+# Pass through git's arguments: $1=prev HEAD, $2=new HEAD, $3=branch flag
+DISPATCHER="${WORKSPACE_ROOT}/.workspace/hooks/dispatch.sh"
+if [ -x "$DISPATCHER" ]; then
+    "$DISPATCHER" "post-checkout" "$1" "$2" "$3" || exit $?
+fi
+
+exit 0

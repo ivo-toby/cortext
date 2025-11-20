@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Cortext pre-commit hook
+# Dispatches pre-commit event to hook system
+
+# Find workspace root
+WORKSPACE_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$WORKSPACE_ROOT" ]; then
+    exit 0
+fi
+
+# Call dispatcher if it exists
+DISPATCHER="${WORKSPACE_ROOT}/.workspace/hooks/dispatch.sh"
+if [ -x "$DISPATCHER" ]; then
+    "$DISPATCHER" "pre-commit" || exit $?
+fi
+
+exit 0

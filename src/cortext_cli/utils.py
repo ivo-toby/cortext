@@ -126,3 +126,19 @@ def get_git_hooks_dir() -> Path:
         return dev_hooks
 
     return dev_hooks
+
+
+def get_hooks_dir() -> Path:
+    """Get the hooks directory from the package (for copying to .workspace/hooks)."""
+    # Try system location first (installed package)
+    sys_hooks = Path(sys.prefix) / "share" / "cortext" / "scripts" / "hooks"
+    if sys_hooks.exists():
+        return sys_hooks
+
+    # Try development location (editable install)
+    current_file = Path(__file__).resolve()
+    dev_hooks = current_file.parent.parent.parent / "scripts" / "hooks"
+    if dev_hooks.exists():
+        return dev_hooks
+
+    return dev_hooks

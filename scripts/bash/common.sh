@@ -150,6 +150,25 @@ show_header() {
     echo -e "${NC}" >&2
 }
 
+# Dispatch hook event to the hooks system
+dispatch_hook() {
+    local event="$1"
+    shift || true
+
+    local workspace_root
+    workspace_root=$(get_workspace_root 2>/dev/null) || return 0
+
+    local dispatcher="${workspace_root}/hooks/dispatch.sh"
+
+    # Silently succeed if dispatcher doesn't exist
+    if [ ! -x "$dispatcher" ]; then
+        return 0
+    fi
+
+    # Call dispatcher with event and arguments
+    "$dispatcher" "$event" "$@" || true
+}
+
 # Export functions for use in other scripts
 export -f print_success
 export -f print_error
@@ -164,3 +183,4 @@ export -f copy_template
 export -f update_date_in_file
 export -f check_git_initialized
 export -f show_header
+export -f dispatch_hook
