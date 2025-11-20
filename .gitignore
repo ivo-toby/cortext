@@ -44,8 +44,10 @@ htmlcov/
 # Distribution
 *.whl
 
-# RAG index (when implemented)
+# RAG/Embeddings data
 .rag-index/
+.cortext_rag/
+.workspace/embeddings/
 
 # User workspaces (if testing locally)
 test-workspace/

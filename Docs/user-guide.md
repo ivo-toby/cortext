@@ -23,7 +23,7 @@ Complete guide to using Cortext for AI-augmented knowledge work.
 
 ```bash
 # Clone or install Cortext
-git clone https://github.com/yourusername/cortext.git
+git clone https://github.com/ivo-toby/cortext.git
 cd cortext
 
 # Install with uv (recommended)
@@ -84,24 +84,30 @@ edit .workspace/memory/constitution.md
 ```
 
 Fill in:
+
 - **Communication style**: How you want AI to communicate
 - **Working principles**: Your methodology (TDD, documentation standards, etc.)
 - **Technical preferences**: Languages, frameworks, tools
 - **Guardrails**: What to avoid or prefer
 
 Example:
+
 ```markdown
 ## Communication Style
+
 - Tone: Professional but friendly
 - Response Length: Concise with examples
 - Thinking Style: Step-by-step explanations
 
 ## Technical Preferences
+
 **Primary Languages:**
+
 - Python 3.11+
 - TypeScript
 
 **Avoid:**
+
 - JavaScript without TypeScript
 - Complex metaprogramming
 ```
@@ -109,6 +115,7 @@ Example:
 ### Step 2: Start a Conversation
 
 **With Claude Code:**
+
 ```
 cd ~/my-workspace
 claude
@@ -120,12 +127,14 @@ claude
 ```
 
 **With Cursor:**
+
 ```
 cursor ~/my-workspace
 # Cursor will read .cursorrules automatically
 ```
 
 **Manually (any tool):**
+
 ```bash
 # Run the bash script directly
 .workspace/scripts/bash/brainstorm.sh "My Feature Ideas"
@@ -134,6 +143,7 @@ cursor ~/my-workspace
 ### Step 3: Work Through the Template
 
 The conversation template guides you through sections:
+
 - Goals
 - Main content
 - Insights
@@ -157,9 +167,11 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 ## Conversation Types
 
 ### Brainstorm
+
 **Purpose**: Free-form ideation and exploration
 
 **Use when**:
+
 - Exploring new ideas
 - Problem-solving creatively
 - Planning without constraints
@@ -169,9 +181,11 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 **Command**: `/workspace.brainstorm` or `.workspace/scripts/bash/brainstorm.sh "Topic"`
 
 ### Debug
+
 **Purpose**: Systematic troubleshooting
 
 **Use when**:
+
 - Fixing bugs
 - Investigating issues
 - Root cause analysis
@@ -181,9 +195,11 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 **Command**: `/workspace.debug` or `.workspace/scripts/bash/debug.sh "Issue"`
 
 ### Plan
+
 **Purpose**: Feature and project planning
 
 **Use when**:
+
 - Designing features
 - Planning projects
 - Making architectural decisions
@@ -193,9 +209,11 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 **Command**: `/workspace.plan` or `.workspace/scripts/bash/plan.sh "Feature"`
 
 ### Learn
+
 **Purpose**: Learning documentation
 
 **Use when**:
+
 - Learning new technologies
 - Taking notes
 - Documenting discoveries
@@ -205,9 +223,11 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 **Command**: `/workspace.learn` or `.workspace/scripts/bash/learn.sh "Topic"`
 
 ### Meeting
+
 **Purpose**: Meeting notes and action items
 
 **Use when**:
+
 - Documenting meetings
 - Capturing decisions
 - Tracking action items
@@ -217,9 +237,11 @@ git commit -m "[conversation] Brainstorm: My Feature Ideas"
 **Command**: `/workspace.meeting` or `.workspace/scripts/bash/meeting.sh "Meeting"`
 
 ### Review
+
 **Purpose**: Code and design reviews
 
 **Use when**:
+
 - Reviewing code
 - Design critiques
 - Providing feedback
@@ -237,6 +259,7 @@ Your constitution is the **single source of truth** for how AI assistants should
 ### What Goes in the Constitution
 
 **Communication Preferences**:
+
 ```markdown
 - Be concise but include examples
 - Use bullet points for clarity
@@ -244,6 +267,7 @@ Your constitution is the **single source of truth** for how AI assistants should
 ```
 
 **Working Principles**:
+
 ```markdown
 - Write tests first (TDD)
 - Document public APIs
@@ -251,6 +275,7 @@ Your constitution is the **single source of truth** for how AI assistants should
 ```
 
 **Technical Stack**:
+
 ```markdown
 Primary: Python, TypeScript, PostgreSQL
 Familiar: Go, React, Docker
@@ -258,13 +283,16 @@ Learning: Rust, Kubernetes
 ```
 
 **Guardrails**:
+
 ```markdown
 Prefer:
+
 - Strong typing
 - Explicit error handling
 - Functional approaches
 
 Avoid:
+
 - Magic numbers
 - Global state
 - Complex inheritance
@@ -287,6 +315,7 @@ edit .workspace/memory/constitution.md
 Claude Code automatically uses the Cortext MCP server for search.
 
 **In conversation**:
+
 ```
 Search my workspace for "authentication bug"
 Get context about API design decisions
@@ -313,6 +342,7 @@ rg "feature" conversations/2025-11/
 ```
 
 Shows:
+
 - Current branch
 - Conversation count
 - Recent conversations
@@ -339,11 +369,13 @@ Users can create manual branches when isolation is needed.
 ### Committing Work
 
 **Auto-commit**:
+
 ```bash
 .workspace/scripts/bash/commit-session.sh
 ```
 
 **Manual commit**:
+
 ```bash
 git add conversations/
 git commit -m "[conversation] Update brainstorm: Feature X
@@ -391,6 +423,7 @@ Create conversation types tailored to your needs!
 ```
 
 Claude will interview you:
+
 1. What to call it?
 2. What's the purpose?
 3. What sections?
@@ -398,6 +431,7 @@ Claude will interview you:
 5. What outputs?
 
 Then it generates:
+
 - Template markdown file
 - Bash script
 - Slash command
@@ -416,27 +450,34 @@ Then it generates:
 # Book Notes: [TITLE]
 
 ## Book Info
+
 - Author: [AUTHOR]
 - Published: [YEAR]
 - Genre: [GENRE]
 
 ## Reading Progress
+
 - Started: [DATE]
 - Status: [Reading/Completed]
 - Current Page: [PAGE]
 
 ## Chapter Notes
+
 ### Chapter [N]: [TITLE]
+
 [Your notes]
 
 ## Key Insights
+
 - [Insight 1]
 - [Insight 2]
 
 ## Quotes
+
 > "[Quote]" - Page [N]
 
 ## Personal Reflections
+
 [Your thoughts]
 
 ## Rating: [X]/5
@@ -487,6 +528,7 @@ See [Multi-AI Support](multi-ai-support.md) for details.
 ### 1. Update Your Constitution Regularly
 
 As your preferences evolve, update the constitution:
+
 ```bash
 edit .workspace/memory/constitution.md
 ```
@@ -494,6 +536,7 @@ edit .workspace/memory/constitution.md
 ### 2. Commit Often
 
 Don't lose work! Commit after each significant conversation:
+
 ```bash
 .workspace/scripts/bash/commit-session.sh
 ```
@@ -501,6 +544,7 @@ Don't lose work! Commit after each significant conversation:
 ### 3. Cross-Reference Past Work
 
 Before starting new conversations, search for related ones:
+
 ```
 Search workspace for "similar topic"
 ```
@@ -508,6 +552,7 @@ Search workspace for "similar topic"
 ### 4. Use the Right Conversation Type
 
 Match the conversation type to your goal:
+
 - Ideation → Brainstorm
 - Bug fixing → Debug
 - Planning → Plan
@@ -516,6 +561,7 @@ Match the conversation type to your goal:
 ### 5. Document Decisions
 
 When making important decisions, log them:
+
 ```bash
 edit .workspace/memory/decisions.md
 ```
@@ -523,6 +569,7 @@ edit .workspace/memory/decisions.md
 ### 6. Keep Context Updated
 
 Update your current focus regularly:
+
 ```bash
 edit .workspace/memory/context.md
 ```
@@ -530,6 +577,7 @@ edit .workspace/memory/context.md
 ### 7. Review Past Conversations
 
 Periodically review old conversations to:
+
 - Extract insights
 - Identify patterns
 - Update documentation
@@ -569,6 +617,7 @@ tar -czf workspace-backup-$(date +%Y%m%d).tar.gz conversations/
 ### Templates Customization
 
 Edit templates to match your style:
+
 ```bash
 edit .workspace/templates/brainstorm.md
 ```
@@ -586,6 +635,7 @@ git log --grep="\\[conversation\\]"
 ### Workspace Portability
 
 Your workspace is just files! Sync across machines:
+
 ```bash
 # On machine 1
 cd ~/my-workspace
