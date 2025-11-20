@@ -149,7 +149,7 @@ Each conversation type has:
 - Dedicated markdown template
 - Bash script for automation
 - Slash command for Claude Code
-- Git branch for isolation
+- Git tag for conversation boundaries
 - Auto-commit on creation
 
 Built-in types:
@@ -162,11 +162,14 @@ Built-in types:
 
 ### Git Workflow
 
-```
-main                          # Clean branch
-├── conversation/001-brainstorm-feature
-├── conversation/002-debug-auth
-└── conversation/003-plan-redesign
+All conversations commit directly to main with tags marking boundaries:
+
+```bash
+# List conversation tags
+git tag -l "conv/*" --sort=-creatordate
+# conv/003-plan-redesign
+# conv/002-debug-auth
+# conv/001-brainstorm-feature
 ```
 
 Commits are structured and searchable:
