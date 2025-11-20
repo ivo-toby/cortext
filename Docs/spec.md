@@ -60,7 +60,7 @@ Create a centralized, git-backed workspace for AI-assisted knowledge work that p
 1. **Git as Database**
    - Every conversation, note, and decision tracked in git
    - Atomic commits for searchability and rollback
-   - Branch-based organization for different workstreams
+   - Tag-based organization for conversation boundaries
 
 2. **Local-First RAG**
    - Conversations and notes indexed locally
@@ -156,12 +156,13 @@ Create a centralized, git-backed workspace for AI-assisted knowledge work that p
 ### Git Workflow
 
 **Branch Strategy:**
-```
-main                              # Clean branch, merged completed work
-├── conversation/001-feature-x    # Temporary conversation branches
-├── conversation/002-debug-y
-├── research/001-topic            # Research branches (ResearchKit pattern)
-└── project/alpha-dev             # Project-specific branches
+- All conversations commit directly to `main` branch
+- Git tags mark conversation boundaries: `conv/{ID}`
+- Users can create manual branches when isolation is needed
+
+```bash
+# List conversation tags
+git tag -l "conv/*" --sort=-creatordate
 ```
 
 **Commit Strategy:**
@@ -981,26 +982,24 @@ get_workspace_root() {
     fi
 }
 
-# Get current conversation from git branch
-get_current_conversation_dir() {
-    local workspace_root=$(get_workspace_root)
-    local branch_name=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+# Ensure we're on main branch (or create it if needed)
+ensure_main_branch() {
+    local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 
-    if [ -z "$branch_name" ] || [ "$branch_name" = "main" ]; then
-        print_error "Not on a conversation branch"
-        print_info "Use /workspace.brainstorm or similar to start"
-        exit 1
+    if [ "$current_branch" != "main" ]; then
+        if git show-ref --verify --quiet refs/heads/main; then
+            git checkout main 2>/dev/null
+        else
+            git checkout -b main 2>/dev/null || git checkout main
+        fi
     fi
+}
 
-    # Extract conversation ID from branch (e.g., conversation/001-topic -> 001-topic)
-    local conv_id=$(echo "$branch_name" | sed 's|^conversation/||')
-    local conv_dir="${workspace_root}/../conversations/$(date +%Y-%m-%d)/${conv_id}"
-
-    if [ ! -d "$conv_dir" ]; then
-        mkdir -p "$conv_dir"
-    fi
-
-    echo "$conv_dir"
+# Create a git tag for conversation start
+create_conversation_tag() {
+    local conv_name="$1"
+    local tag_name="conv/${conv_name}"
+    git tag "$tag_name" 2>/dev/null || print_warning "Tag ${tag_name} already exists"
 }
 
 # Get next ID (for auto-incrementing conversation IDs)
@@ -1128,12 +1127,10 @@ CONVERSATION_DIR="${CONVERSATIONS_DIR}/${CONVERSATION_NAME}"
 # Create conversation directory
 mkdir -p "$CONVERSATION_DIR"
 
-# Create git branch
-BRANCH_NAME="conversation/${CONVERSATION_NAME}"
-git checkout -b "$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
+# Ensure we're on main branch
+ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
-print_info "Branch: ${BRANCH_NAME}"
 
 # Copy template
 BRAINSTORM_FILE="${CONVERSATION_DIR}/brainstorm.md"
@@ -1159,6 +1156,9 @@ Created conversation ${CONVERSATION_NAME}.
 Type: brainstorm
 Purpose: Ideation and exploration
 " 2>/dev/null || print_warning "Nothing new to commit"
+
+# Create conversation tag
+create_conversation_tag "$CONVERSATION_NAME"
 
 # Display summary
 echo "" >&2

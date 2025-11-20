@@ -59,26 +59,28 @@ get_conversation_folder() {
     fi
 }
 
-# Get current conversation from git branch
-get_current_conversation_dir() {
-    local workspace_root=$(get_workspace_root)
-    local branch_name=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+# Ensure we're on main branch (or create it if needed)
+ensure_main_branch() {
+    local current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 
-    if [ -z "$branch_name" ] || [ "$branch_name" = "main" ]; then
-        print_error "Not on a conversation branch"
-        print_info "Use /workspace.brainstorm or similar to start"
-        exit 1
+    if [ "$current_branch" != "main" ]; then
+        # Check if main exists
+        if git show-ref --verify --quiet refs/heads/main; then
+            git checkout main 2>/dev/null
+        else
+            # Create main branch if it doesn't exist
+            git checkout -b main 2>/dev/null || git checkout main
+        fi
     fi
+}
 
-    # Extract conversation ID from branch (e.g., conversation/001-topic -> 001-topic)
-    local conv_id=$(echo "$branch_name" | sed 's|^conversation/||')
-    local conv_dir="${workspace_root}/../conversations/$(date +%Y-%m-%d)/${conv_id}"
+# Create a git tag for conversation start
+create_conversation_tag() {
+    local conv_name="$1"
+    local tag_name="conv/${conv_name}"
 
-    if [ ! -d "$conv_dir" ]; then
-        mkdir -p "$conv_dir"
-    fi
-
-    echo "$conv_dir"
+    # Create lightweight tag pointing to current commit
+    git tag "$tag_name" 2>/dev/null || print_warning "Tag ${tag_name} already exists"
 }
 
 # Get next ID (for auto-incrementing conversation IDs)
@@ -177,7 +179,8 @@ export -f print_info
 export -f print_step
 export -f get_workspace_root
 export -f get_conversation_folder
-export -f get_current_conversation_dir
+export -f ensure_main_branch
+export -f create_conversation_tag
 export -f get_next_id
 export -f copy_template
 export -f update_date_in_file

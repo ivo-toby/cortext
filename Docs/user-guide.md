@@ -324,14 +324,17 @@ Shows:
 
 ### Branch Strategy
 
-```
-main                                    # Clean, merged work
-├── conversation/001-brainstorm-feature
-├── conversation/002-debug-auth
-└── conversation/003-plan-redesign
+All conversations commit directly to `main` with tags marking boundaries:
+
+```bash
+# List conversation tags
+git tag -l "conv/*" --sort=-creatordate
+# conv/003-plan-redesign
+# conv/002-debug-auth
+# conv/001-brainstorm-feature
 ```
 
-Each conversation gets its own branch for isolation.
+Users can create manual branches when isolation is needed.
 
 ### Committing Work
 
@@ -362,13 +365,17 @@ Metadata:
 
 **Types**: `[conversation]`, `[research]`, `[decision]`, `[note]`, `[workspace]`
 
-### Merging Conversations
+### Working with Tags
 
 ```bash
-# When done with a conversation
-git checkout main
-git merge conversation/001-brainstorm-feature
-git push
+# List all conversation tags
+git tag -l "conv/*" --sort=-creatordate
+
+# Show commits for a specific conversation
+git log conv/001-brainstorm-feature..HEAD --oneline
+
+# Find the commit for a conversation start
+git show conv/001-brainstorm-feature
 ```
 
 ---
@@ -602,7 +609,7 @@ git clone <repo> ~/my-workspace
 → Check ripgrep is installed: `brew install ripgrep`
 
 **Git conflicts**
-→ Each conversation has its own branch; merge to main when done
+→ All conversations commit to main; use `git revert` to undo changes
 
 **MCP server not working**
 → Reinstall: `pip install -e .` and verify: `which cortext-mcp`
