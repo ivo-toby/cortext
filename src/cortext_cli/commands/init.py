@@ -513,6 +513,17 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "description": "Code and design review",
                 "sections": ["overview", "feedback", "suggestions", "decision"],
             },
+            "projectmanage": {
+                "name": "Project Manage",
+                "folder": "projectmanage",
+                "template": ".workspace/templates/project-management.md",
+                "command": "/workspace.projectmanage",
+                "script": ".workspace/scripts/bash/projectmanage.sh",
+                "built_in": True,
+                "created": datetime.now().isoformat(),
+                "description": "Project management and tracking",
+                "sections": ["goals", "roadmap", "tasks", "status", "index"],
+            },
         },
         "statistics": {"total_conversations": 0, "by_type": {}},
     }

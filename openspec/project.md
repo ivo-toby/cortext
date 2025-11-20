@@ -166,12 +166,15 @@ Cortext organizes knowledge work into conversation types:
 4. **Learn** - Learning documentation with examples and notes
 5. **Meeting** - Structured meeting notes with action items
 6. **Review** - Code and design reviews with feedback
+7. **Project Manage** - Project tracking with multi-document architecture, proactive context search, and auto-maintained index
 
 Each type has:
 - Template (`.workspace/templates/{type}.md`)
 - Bash script (`.workspace/scripts/bash/{type}.sh`)
 - Slash command (`.claude/commands/workspace_{type}.md`)
 - Registry entry (`.workspace/registry.json`)
+
+**Note:** Project Manage has enhanced features including a `docs/` subfolder for categorized documents and an auto-maintained `index.md`.
 
 ### Constitution System
 
@@ -201,6 +204,7 @@ workspace/
 ├── learn/                  # Learning notes
 ├── meeting/                # Meeting notes
 ├── plan/                   # Planning sessions
+├── projectmanage/          # Project management (with docs/ subfolder and index.md)
 ├── review/                 # Code reviews
 ├── .claude/               # Claude Code configuration
 ├── .cursorrules          # Cursor configuration
