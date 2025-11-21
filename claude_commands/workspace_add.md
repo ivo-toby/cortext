@@ -120,12 +120,10 @@ CONVERSATION_DIR="${CONVERSATIONS_DIR}/${CONVERSATION_NAME}"
 # Create conversation directory
 mkdir -p "$CONVERSATION_DIR"
 
-# Create git branch
-BRANCH_NAME="conversation/${CONVERSATION_NAME}"
-git checkout -b "$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
+# Ensure we're on main branch
+ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
-print_info "Branch: ${BRANCH_NAME}"
 
 # Copy template
 FILE="${CONVERSATION_DIR}/{type_name}.md"
@@ -151,6 +149,12 @@ Created conversation ${CONVERSATION_NAME}.
 Type: {type_name}
 Purpose: {description}
 " 2>/dev/null || print_warning "Nothing new to commit"
+
+# Create conversation tag
+create_conversation_tag "$CONVERSATION_NAME"
+
+# Dispatch conversation:create hook
+dispatch_hook "conversation:create" "$CONVERSATION_DIR"
 
 # Display summary
 echo "" >&2
