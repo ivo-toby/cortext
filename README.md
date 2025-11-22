@@ -35,6 +35,9 @@ pip install -e .
 
 # Verify installation
 cortext check
+
+# Check version
+cortext -v
 ```
 
 ### Initialize Your Workspace
@@ -269,6 +272,26 @@ Contributions welcome! See the task list for areas needing work.
 Optional:
 - ripgrep (for fast keyword search)
 - tmux (for session management)
+
+### Versioning
+
+Cortext uses [semantic versioning](https://semver.org/). Versions are automatically bumped on merge to main based on commit message prefixes:
+
+- `feat:` or `feat(scope):` → Minor bump (0.1.0 → 0.2.0)
+- `fix:` or `fix(scope):` → Patch bump (0.1.0 → 0.1.1)
+- `BREAKING CHANGE:` or `!:` → Major bump (0.1.0 → 1.0.0)
+
+**Check installed version:**
+```bash
+cortext -v        # or cortext --version
+```
+
+**Commit message examples:**
+```bash
+git commit -m "feat: add export functionality"
+git commit -m "fix(mcp): resolve search timeout issue"
+git commit -m "feat!: redesign conversation API"
+```
 
 ### Testing Development Locally
 

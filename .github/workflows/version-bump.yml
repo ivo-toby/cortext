@@ -1,0 +1,171 @@
+name: Version Bump
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    # Skip if commit message contains [skip ci] or is a version bump commit
+    if: "!contains(github.event.head_commit.message, '[skip ci]') && !contains(github.event.head_commit.message, 'chore: bump version')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Determine version bump type
+        id: bump-type
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+          # Check for breaking changes (major bump)
+          if echo "$COMMIT_MSG" | grep -qE "BREAKING CHANGE:|!:"; then
+            echo "bump=major" >> $GITHUB_OUTPUT
+          # Check for features (minor bump)
+          elif echo "$COMMIT_MSG" | grep -qE "^feat(\(|:)"; then
+            echo "bump=minor" >> $GITHUB_OUTPUT
+          # Check for fixes (patch bump)
+          elif echo "$COMMIT_MSG" | grep -qE "^fix(\(|:)"; then
+            echo "bump=patch" >> $GITHUB_OUTPUT
+          else
+            echo "bump=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Bump version
+        if: steps.bump-type.outputs.bump != 'none'
+        id: bump-version
+        run: |
+          # Get current version from pyproject.toml
+          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]+' pyproject.toml)
+
+          # Parse version components
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+
+          # Bump appropriate component
+          case "${{ steps.bump-type.outputs.bump }}" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Bumping version from $CURRENT_VERSION to $NEW_VERSION"
+
+          # Update pyproject.toml
+          sed -i "s/^version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
+
+      - name: Generate changelog entry
+        if: steps.bump-type.outputs.bump != 'none'
+        run: |
+          NEW_VERSION="${{ steps.bump-version.outputs.new_version }}"
+          TODAY=$(date +%Y-%m-%d)
+
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Get commits since last tag (or all commits if no tag)
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s" "$PREV_TAG"..HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s")
+          fi
+
+          # Initialize sections
+          ADDED=""
+          FIXED=""
+          CHANGED=""
+
+          # Parse commits and categorize
+          while IFS= read -r commit; do
+            # Skip empty lines
+            [ -z "$commit" ] && continue
+
+            # Extract the summary (remove scope if present)
+            if echo "$commit" | grep -qE "^feat(\([^)]*\))?:"; then
+              summary=$(echo "$commit" | sed -E 's/^feat(\([^)]*\))?: *//')
+              ADDED="${ADDED}- ${summary}\n"
+            elif echo "$commit" | grep -qE "^fix(\([^)]*\))?:"; then
+              summary=$(echo "$commit" | sed -E 's/^fix(\([^)]*\))?: *//')
+              FIXED="${FIXED}- ${summary}\n"
+            elif echo "$commit" | grep -qE "^docs(\([^)]*\))?:"; then
+              summary=$(echo "$commit" | sed -E 's/^docs(\([^)]*\))?: *//')
+              CHANGED="${CHANGED}- ${summary}\n"
+            fi
+          done <<< "$COMMITS"
+
+          # Build the changelog entry
+          ENTRY="## [$NEW_VERSION] - $TODAY\n\n"
+
+          if [ -n "$ADDED" ]; then
+            ENTRY="${ENTRY}### Added\n\n${ADDED}\n"
+          fi
+
+          if [ -n "$FIXED" ]; then
+            ENTRY="${ENTRY}### Fixed\n\n${FIXED}\n"
+          fi
+
+          if [ -n "$CHANGED" ]; then
+            ENTRY="${ENTRY}### Changed\n\n${CHANGED}\n"
+          fi
+
+          # Insert after ## [Unreleased] section
+          # Find the line number of ## [Unreleased] and insert after it
+          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            # Use awk to insert after the Unreleased section (after next blank line or before next ##)
+            awk -v entry="$ENTRY" '
+              /^## \[Unreleased\]/ {
+                print
+                found=1
+                next
+              }
+              found && /^## \[/ {
+                printf "%b", entry
+                found=0
+              }
+              {print}
+              END {
+                if (found) printf "%b", entry
+              }
+            ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          else
+            # No Unreleased section, prepend to file after header
+            echo -e "$ENTRY" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          fi
+
+          echo "Generated changelog entry for v$NEW_VERSION"
+
+      - name: Commit and tag
+        if: steps.bump-type.outputs.bump != 'none'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add pyproject.toml CHANGELOG.md
+          git commit -m "chore: bump version to ${{ steps.bump-version.outputs.new_version }} [skip ci]"
+          git tag -a "v${{ steps.bump-version.outputs.new_version }}" -m "Release v${{ steps.bump-version.outputs.new_version }}"
+
+          git push origin main
+          git push origin "v${{ steps.bump-version.outputs.new_version }}"
