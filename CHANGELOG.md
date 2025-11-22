@@ -232,7 +232,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Previous Releases]
+%b## [Previous Releases]
 
 ### Changed
 
@@ -367,3 +367,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [User Guide](Docs/user-guide.md)
 - [MCP Server Guide](Docs/mcp-server.md)
 - [Multi-AI Support](Docs/multi-ai-support.md)
+%b
