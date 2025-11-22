@@ -77,13 +77,93 @@ jobs:
           # Update pyproject.toml
           sed -i "s/^version = \"$CURRENT_VERSION\"/version = \"$NEW_VERSION\"/" pyproject.toml
 
+      - name: Generate changelog entry
+        if: steps.bump-type.outputs.bump != 'none'
+        run: |
+          NEW_VERSION="${{ steps.bump-version.outputs.new_version }}"
+          TODAY=$(date +%Y-%m-%d)
+
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Get commits since last tag (or all commits if no tag)
+          if [ -n "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"%s" "$PREV_TAG"..HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s")
+          fi
+
+          # Initialize sections
+          ADDED=""
+          FIXED=""
+          CHANGED=""
+
+          # Parse commits and categorize
+          while IFS= read -r commit; do
+            # Skip empty lines
+            [ -z "$commit" ] && continue
+
+            # Extract the summary (remove scope if present)
+            if echo "$commit" | grep -qE "^feat(\([^)]*\))?:"; then
+              summary=$(echo "$commit" | sed -E 's/^feat(\([^)]*\))?: *//')
+              ADDED="${ADDED}- ${summary}\n"
+            elif echo "$commit" | grep -qE "^fix(\([^)]*\))?:"; then
+              summary=$(echo "$commit" | sed -E 's/^fix(\([^)]*\))?: *//')
+              FIXED="${FIXED}- ${summary}\n"
+            elif echo "$commit" | grep -qE "^docs(\([^)]*\))?:"; then
+              summary=$(echo "$commit" | sed -E 's/^docs(\([^)]*\))?: *//')
+              CHANGED="${CHANGED}- ${summary}\n"
+            fi
+          done <<< "$COMMITS"
+
+          # Build the changelog entry
+          ENTRY="## [$NEW_VERSION] - $TODAY\n\n"
+
+          if [ -n "$ADDED" ]; then
+            ENTRY="${ENTRY}### Added\n\n${ADDED}\n"
+          fi
+
+          if [ -n "$FIXED" ]; then
+            ENTRY="${ENTRY}### Fixed\n\n${FIXED}\n"
+          fi
+
+          if [ -n "$CHANGED" ]; then
+            ENTRY="${ENTRY}### Changed\n\n${CHANGED}\n"
+          fi
+
+          # Insert after ## [Unreleased] section
+          # Find the line number of ## [Unreleased] and insert after it
+          if grep -q "## \[Unreleased\]" CHANGELOG.md; then
+            # Use awk to insert after the Unreleased section (after next blank line or before next ##)
+            awk -v entry="$ENTRY" '
+              /^## \[Unreleased\]/ {
+                print
+                found=1
+                next
+              }
+              found && /^## \[/ {
+                printf "%b", entry
+                found=0
+              }
+              {print}
+              END {
+                if (found) printf "%b", entry
+              }
+            ' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          else
+            # No Unreleased section, prepend to file after header
+            echo -e "$ENTRY" | cat - CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+          fi
+
+          echo "Generated changelog entry for v$NEW_VERSION"
+
       - name: Commit and tag
         if: steps.bump-type.outputs.bump != 'none'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add pyproject.toml
+          git add pyproject.toml CHANGELOG.md
           git commit -m "chore: bump version to ${{ steps.bump-version.outputs.new_version }} [skip ci]"
           git tag -a "v${{ steps.bump-version.outputs.new_version }}" -m "Release v${{ steps.bump-version.outputs.new_version }}"
 
