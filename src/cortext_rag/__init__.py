@@ -1,7 +1,5 @@
 """RAG pipeline for Cortext workspace context management."""
 
-__version__ = "0.1.0"
-
 
 def get_embedder():
     """Get the embedder instance."""
@@ -28,7 +26,6 @@ def get_retriever(workspace_path=None):
 
 
 __all__ = [
-    "__version__",
     "get_embedder",
     "get_store",
     "get_indexer",

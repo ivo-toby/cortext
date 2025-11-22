@@ -1,6 +1,7 @@
 """Main CLI interface for Cortext."""
 
 import sys
+from importlib.metadata import version
 from pathlib import Path
 from typing import Optional
 
@@ -20,8 +21,26 @@ app = typer.Typer(
 )
 
 
+def version_callback(value: bool):
+    """Print version and exit."""
+    if value:
+        pkg_version = version("cortext-workspace")
+        console.print(f"cortext {pkg_version}")
+        raise typer.Exit()
+
+
 @app.callback()
-def callback(ctx: typer.Context):
+def callback(
+    ctx: typer.Context,
+    show_version: bool = typer.Option(
+        False,
+        "-v",
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show version and exit.",
+    ),
+):
     """
     Cortext: AI-augmented workspace for knowledge work.
 
