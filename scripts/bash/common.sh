@@ -171,19 +171,206 @@ dispatch_hook() {
     "$dispatcher" "$event" "$@" || true
 }
 
-# Export functions for use in other scripts
-export -f print_success
-export -f print_error
-export -f print_warning
-export -f print_info
-export -f print_step
-export -f get_workspace_root
-export -f get_conversation_folder
-export -f ensure_main_branch
-export -f create_conversation_tag
-export -f get_next_id
-export -f copy_template
-export -f update_date_in_file
-export -f check_git_initialized
-export -f show_header
-export -f dispatch_hook
+# ============================================================================
+# Session Management Utilities
+# ============================================================================
+# These utilities manage conversation session state for resumption.
+#
+# Session storage structure (per conversation):
+#   .session/
+#     session.json    - Metadata, agent config, status
+#     messages.jsonl  - Chat history (JSON Lines format)
+#
+# session.json schema:
+# {
+#   "version": "1.0",
+#   "conversation_id": "001-brainstorm-topic",
+#   "conversation_type": "brainstorm",
+#   "status": "active|paused|completed",
+#   "created_at": "ISO8601",
+#   "last_active": "ISO8601",
+#   "message_count": number,
+#   "agent_config": {
+#     "command": "/workspace.brainstorm",
+#     "system_prompt_hash": "sha256:...",
+#     "model": "model-id",
+#     "tools": ["tool1", "tool2"]
+#   },
+#   "context_summary": "Brief description of conversation state"
+# }
+# ============================================================================
+
+# Get session directory path for a conversation
+get_session_path() {
+    local conversation_dir="$1"
+    echo "${conversation_dir}/.session"
+}
+
+# Initialize session directory for a conversation
+init_session() {
+    local conversation_dir="$1"
+    local conversation_id="$2"
+    local conversation_type="$3"
+    local command="$4"
+
+    local session_dir=$(get_session_path "$conversation_dir")
+    mkdir -p "$session_dir"
+
+    local current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    # Create initial session.json
+    cat > "${session_dir}/session.json" << EOF
+{
+  "version": "1.0",
+  "conversation_id": "${conversation_id}",
+  "conversation_type": "${conversation_type}",
+  "status": "active",
+  "created_at": "${current_time}",
+  "last_active": "${current_time}",
+  "message_count": 0,
+  "agent_config": {
+    "command": "${command}",
+    "system_prompt_hash": "",
+    "model": "",
+    "tools": []
+  },
+  "context_summary": ""
+}
+EOF
+
+    # Create empty messages file
+    touch "${session_dir}/messages.jsonl"
+
+    print_success "Session initialized"
+}
+
+# Update session metadata
+update_session() {
+    local conversation_dir="$1"
+    local status="$2"
+    local message_count="$3"
+    local context_summary="$4"
+
+    local session_file="$(get_session_path "$conversation_dir")/session.json"
+
+    if [ ! -f "$session_file" ]; then
+        print_warning "No session file found"
+        return 1
+    fi
+
+    local current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    # Update session.json using jq
+    local tmp_file=$(mktemp)
+    jq --arg status "$status" \
+       --arg last_active "$current_time" \
+       --arg message_count "$message_count" \
+       --arg summary "$context_summary" \
+       '.status = $status | .last_active = $last_active | .message_count = ($message_count | tonumber) | .context_summary = $summary' \
+       "$session_file" > "$tmp_file" && mv "$tmp_file" "$session_file"
+}
+
+# Append message to session history
+append_message() {
+    local conversation_dir="$1"
+    local role="$2"
+    local content="$3"
+
+    local messages_file="$(get_session_path "$conversation_dir")/messages.jsonl"
+    local current_time=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    # Escape content for JSON
+    local escaped_content=$(echo "$content" | jq -Rs '.')
+
+    # Append message as JSON line
+    echo "{\"role\":\"${role}\",\"content\":${escaped_content},\"timestamp\":\"${current_time}\"}" >> "$messages_file"
+}
+
+# Load session metadata
+load_session() {
+    local conversation_dir="$1"
+    local session_file="$(get_session_path "$conversation_dir")/session.json"
+
+    if [ -f "$session_file" ]; then
+        cat "$session_file"
+    else
+        echo "{}"
+    fi
+}
+
+# Check if conversation has session state
+has_session() {
+    local conversation_dir="$1"
+    local session_file="$(get_session_path "$conversation_dir")/session.json"
+
+    [ -f "$session_file" ]
+}
+
+# Get session status
+get_session_status() {
+    local conversation_dir="$1"
+    local session_file="$(get_session_path "$conversation_dir")/session.json"
+
+    if [ -f "$session_file" ]; then
+        jq -r '.status // "unknown"' "$session_file"
+    else
+        echo "none"
+    fi
+}
+
+# List all conversations with session state
+list_sessions() {
+    local workspace_root=$(get_workspace_root)
+    local parent_dir=$(dirname "$workspace_root")
+
+    # Find all session.json files
+    find "$parent_dir" -path "*/.session/session.json" -type f 2>/dev/null | while read session_file; do
+        local conv_dir=$(dirname $(dirname "$session_file"))
+        local session_data=$(cat "$session_file")
+
+        local conv_id=$(echo "$session_data" | jq -r '.conversation_id')
+        local conv_type=$(echo "$session_data" | jq -r '.conversation_type')
+        local status=$(echo "$session_data" | jq -r '.status')
+        local last_active=$(echo "$session_data" | jq -r '.last_active')
+        local summary=$(echo "$session_data" | jq -r '.context_summary')
+
+        # Output as JSON for easy parsing
+        jq -n \
+            --arg dir "$conv_dir" \
+            --arg id "$conv_id" \
+            --arg type "$conv_type" \
+            --arg status "$status" \
+            --arg last_active "$last_active" \
+            --arg summary "$summary" \
+            '{dir: $dir, id: $id, type: $type, status: $status, last_active: $last_active, summary: $summary}'
+    done
+}
+
+# Export functions for use in other scripts (bash only)
+# Note: export -f is bash-specific and will fail in zsh/sh
+if [ -n "$BASH_VERSION" ]; then
+    export -f print_success
+    export -f print_error
+    export -f print_warning
+    export -f print_info
+    export -f print_step
+    export -f get_workspace_root
+    export -f get_conversation_folder
+    export -f ensure_main_branch
+    export -f create_conversation_tag
+    export -f get_next_id
+    export -f copy_template
+    export -f update_date_in_file
+    export -f check_git_initialized
+    export -f show_header
+    export -f dispatch_hook
+    # Session management
+    export -f get_session_path
+    export -f init_session
+    export -f update_session
+    export -f append_message
+    export -f load_session
+    export -f has_session
+    export -f get_session_status
+    export -f list_sessions
+fi

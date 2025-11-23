@@ -71,3 +71,18 @@ Focus on these key elements:
 - **Clarify ownership** - Who owns each action item?
 - **Be concise** - Future you needs essence, not details
 - **Ask if unclear** - Better to clarify now than guess
+
+## Session Management
+
+**This conversation can be paused and resumed.**
+
+When the meeting ends or the user indicates they want to stop:
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the meeting context for later reference
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When the meeting ends**, offer to save:
+- "Would you like me to save this session?"
+- If yes, use `/workspace.stop-conversation`

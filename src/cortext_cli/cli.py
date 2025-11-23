@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from cortext_cli.commands import check, init, list, embed, search, rag, mcp, hooks
+from cortext_cli.commands import check, init, list, embed, search, rag, mcp, hooks, resume
 
 console = Console()
 
@@ -55,6 +55,7 @@ def callback(
                 "  [green]cortext init[/green]        Initialize a new workspace\n"
                 "  [green]cortext check[/green]       Check required tools\n"
                 "  [green]cortext list[/green]        List conversation types\n"
+                "  [green]cortext resume[/green]      Resume paused conversations\n"
                 "  [green]cortext embed[/green]       Embed documents for RAG\n"
                 "  [green]cortext search[/green]      Search conversations\n"
                 "  [green]cortext rag status[/green]  RAG embedding statistics\n"
@@ -69,6 +70,7 @@ def callback(
 app.command()(check.check)
 app.command()(init.init)
 app.command(name="list")(list.list_types)
+app.command(name="resume")(resume.resume_command)
 app.command(name="embed")(embed.embed_command)
 app.command(name="search")(search.search_command)
 app.add_typer(rag.app, name="rag")

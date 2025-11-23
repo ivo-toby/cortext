@@ -74,3 +74,18 @@ Use these techniques naturally:
 - **Consider simple causes first** - Occam's razor
 - **Be methodical** - Track what's been tried
 - **Capture learnings** - Even failed approaches teach us
+
+## Session Management
+
+**This conversation can be paused and resumed.**
+
+When the user indicates they want to stop (e.g., "let's stop here", "I need to take a break", "let's pick this up later"):
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the investigation context for later resumption
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When detecting pause signals**, confirm with the user:
+- "Would you like me to save this session so we can continue the investigation later?"
+- If yes, use `/workspace.stop-conversation`

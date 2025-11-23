@@ -12,6 +12,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 - **🔄 Git-Based** - Every conversation and decision tracked in version control
 - **🤖 Multi-AI Support** - Works with Claude Code, OpenCode, Gemini CLI, Cursor, and more
 - **🧠 Persistent Memory** - Personal constitution defines your working style across all tools
+- **⏸️ Session Resumption** - Pause and resume conversations with full context preserved
 - **🔍 RAG Search** - Semantic search across all conversations using local embeddings
 - **🎯 Workflow Automation** - Bash scripts and slash commands for repeatable processes
 - **🪝 Event Hooks** - Extensible automation triggered on workspace events
@@ -81,6 +82,16 @@ Once your workspace is initialized, Claude Code will have access to conversation
 /workspace.meeting         Capture meeting notes and actions
 /workspace.review          Conduct code or design reviews
 /workspace.projectmanage   Manage project with multi-document tracking
+/workspace.stop-conversation  Save session for later resumption
+/workspace.resume          Resume a paused conversation
+```
+
+**CLI Commands:**
+```bash
+cortext resume --list              # List all resumable conversations
+cortext resume --list --type brainstorm  # Filter by type
+cortext resume "api design"        # Resume by search term
+cortext resume 001-brainstorm-api  # Resume by ID
 ```
 
 ### MCP Server (AI Agent Integration)
@@ -169,6 +180,35 @@ Built-in types:
 - **Meeting** - Meeting notes with action items
 - **Review** - Code/design reviews
 - **Project Manage** - Project tracking with multi-document architecture, proactive context search, and auto-maintained index
+
+### Session Management
+
+Conversations can be paused and resumed with full context preservation:
+
+**How it works:**
+1. **Session auto-initializes** - When you start a conversation, a session is created
+2. **Pause with context** - Use `/workspace.stop-conversation` to save session state
+3. **Resume seamlessly** - Use `/workspace.resume` to continue where you left off
+
+**Session data stored:**
+- Message history (chat exchanges)
+- Agent configuration (which command, model)
+- Context summary (what was being discussed)
+- Status (active, paused, completed)
+
+**Storage location:**
+```
+001-brainstorm-api-design/
+├── brainstorm.md           # Conversation content
+└── .session/
+    ├── session.json        # Metadata and config
+    └── messages.jsonl      # Chat history
+```
+
+**Resume flow:**
+1. Agent loads the original command's system prompt
+2. Injects conversation context and history
+3. Continues naturally from where you stopped
 
 ### Git Workflow
 

@@ -106,3 +106,18 @@ You: "Exactly! Let me add a note about that..."
      different nodes? Have you heard of overlay networks?"
 [Conversation continues naturally...]
 ```
+
+## Session Management
+
+**This conversation can be paused and resumed.**
+
+When the user indicates they want to stop (e.g., "let me try this and come back", "that's enough for now", "I need a break"):
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the learning context for later resumption
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When detecting pause signals**, confirm with the user:
+- "Would you like me to save this session so we can continue learning later?"
+- If yes, use `/workspace.stop-conversation`

@@ -72,3 +72,18 @@ Mix these naturally:
 - **Surface assumptions** - Make thinking explicit
 - **Consider trade-offs** - No perfect solutions
 - **Stay flexible** - Plans change, that's normal
+
+## Session Management
+
+**This conversation can be paused and resumed.**
+
+When the user indicates they want to stop (e.g., "let's stop here", "that's enough for now", "let's continue later"):
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the planning context for later resumption
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When detecting pause signals**, confirm with the user:
+- "Would you like me to save this session so we can continue planning later?"
+- If yes, use `/workspace.stop-conversation`

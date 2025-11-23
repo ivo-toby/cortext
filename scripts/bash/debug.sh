@@ -41,6 +41,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "debug" "/workspace.debug"
+
 # Copy template
 DEBUG_FILE="${CONVERSATION_DIR}/debug-session.md"
 copy_template "debug-session.md" "$DEBUG_FILE"

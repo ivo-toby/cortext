@@ -457,6 +457,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Ideation and exploration",
                 "sections": ["goals", "ideas", "themes", "next-steps"],
+                "session_support": True,
             },
             "debug": {
                 "name": "Debug",
@@ -468,6 +469,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Problem solving and troubleshooting",
                 "sections": ["problem", "investigation", "solution", "learnings"],
+                "session_support": True,
             },
             "plan": {
                 "name": "Plan",
@@ -479,6 +481,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Feature and project planning",
                 "sections": ["goals", "requirements", "approach", "tasks"],
+                "session_support": True,
             },
             "learn": {
                 "name": "Learn",
@@ -490,6 +493,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Learning notes and documentation",
                 "sections": ["topic", "notes", "examples", "references"],
+                "session_support": True,
             },
             "meeting": {
                 "name": "Meeting",
@@ -501,6 +505,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Meeting notes and action items",
                 "sections": ["attendees", "agenda", "notes", "actions"],
+                "session_support": True,
             },
             "review": {
                 "name": "Review",
@@ -512,6 +517,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Code and design review",
                 "sections": ["overview", "feedback", "suggestions", "decision"],
+                "session_support": True,
             },
             "projectmanage": {
                 "name": "Project Manage",
@@ -523,6 +529,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
                 "created": datetime.now().isoformat(),
                 "description": "Project management and tracking",
                 "sections": ["goals", "roadmap", "tasks", "status", "index"],
+                "session_support": True,
             },
         },
         "statistics": {"total_conversations": 0, "by_type": {}},

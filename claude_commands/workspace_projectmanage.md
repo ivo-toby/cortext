@@ -136,3 +136,18 @@ When the user asks for status or overview:
 3. Highlight recent status updates
 4. Reference the document index for full documentation
 5. Surface any blockers or decisions needed
+
+## Session Management
+
+**This conversation can be paused and resumed.**
+
+When the user indicates they want to stop (e.g., "let's stop here", "that's enough for today", "let's continue this later"):
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the project management context for later resumption
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When detecting pause signals**, confirm with the user:
+- "Would you like me to save this session so we can continue later?"
+- If yes, use `/workspace.stop-conversation`

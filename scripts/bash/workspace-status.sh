@@ -79,3 +79,44 @@ else
 fi
 
 echo "" >&2
+
+# Resumable conversations (with session state)
+echo -e "${CYAN}Resumable Sessions:${NC}" >&2
+PARENT_DIR=$(dirname "$WORKSPACE_ROOT")
+SESSION_COUNT=$(find "$PARENT_DIR" -path "*/.session/session.json" -type f 2>/dev/null | wc -l)
+
+if [ "$SESSION_COUNT" -gt 0 ]; then
+    # Count by status
+    ACTIVE_COUNT=0
+    PAUSED_COUNT=0
+    COMPLETED_COUNT=0
+
+    while read session_file; do
+        STATUS=$(jq -r '.status // "unknown"' "$session_file" 2>/dev/null)
+        case "$STATUS" in
+            active) ACTIVE_COUNT=$((ACTIVE_COUNT + 1)) ;;
+            paused) PAUSED_COUNT=$((PAUSED_COUNT + 1)) ;;
+            completed) COMPLETED_COUNT=$((COMPLETED_COUNT + 1)) ;;
+        esac
+    done < <(find "$PARENT_DIR" -path "*/.session/session.json" -type f 2>/dev/null)
+
+    echo "  Total: ${SESSION_COUNT}" >&2
+    [ "$ACTIVE_COUNT" -gt 0 ] && echo "  Active: ${ACTIVE_COUNT}" >&2
+    [ "$PAUSED_COUNT" -gt 0 ] && echo "  Paused: ${PAUSED_COUNT}" >&2
+    [ "$COMPLETED_COUNT" -gt 0 ] && echo "  Completed: ${COMPLETED_COUNT}" >&2
+
+    # Show most recent resumable
+    echo "" >&2
+    echo "  Most recent:" >&2
+    find "$PARENT_DIR" -path "*/.session/session.json" -type f 2>/dev/null | while read session_file; do
+        CONV_ID=$(jq -r '.conversation_id' "$session_file" 2>/dev/null)
+        STATUS=$(jq -r '.status' "$session_file" 2>/dev/null)
+        LAST_ACTIVE=$(jq -r '.last_active' "$session_file" 2>/dev/null)
+        echo "    - ${CONV_ID} (${STATUS})" >&2
+    done | head -3
+else
+    echo "  No resumable sessions" >&2
+    echo "  [dim]Use /workspace.stop-conversation to save sessions[/dim]" >&2
+fi
+
+echo "" >&2

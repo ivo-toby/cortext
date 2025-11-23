@@ -41,6 +41,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "meeting" "/workspace.meeting"
+
 # Copy template
 MEETING_FILE="${CONVERSATION_DIR}/meeting-notes.md"
 copy_template "meeting-notes.md" "$MEETING_FILE"
