@@ -41,6 +41,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "plan" "/workspace.plan"
+
 # Copy template
 PLAN_FILE="${CONVERSATION_DIR}/feature-planning.md"
 copy_template "feature-planning.md" "$PLAN_FILE"

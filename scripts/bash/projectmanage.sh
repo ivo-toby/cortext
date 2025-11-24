@@ -42,6 +42,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "projectmanage" "/workspace.projectmanage"
+
 # Copy master template
 PROJECT_FILE="${CONVERSATION_DIR}/project-management.md"
 copy_template "project-management.md" "$PROJECT_FILE"

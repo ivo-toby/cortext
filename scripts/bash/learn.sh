@@ -41,6 +41,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "learn" "/workspace.learn"
+
 # Copy template
 LEARN_FILE="${CONVERSATION_DIR}/learning-notes.md"
 copy_template "learning-notes.md" "$LEARN_FILE"

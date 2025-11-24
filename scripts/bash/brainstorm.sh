@@ -41,6 +41,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "brainstorm" "/workspace.brainstorm"
+
 # Copy template
 BRAINSTORM_FILE="${CONVERSATION_DIR}/brainstorm.md"
 copy_template "brainstorm.md" "$BRAINSTORM_FILE"

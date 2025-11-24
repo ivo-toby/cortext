@@ -61,6 +61,21 @@ You are helping the user brainstorm through conversation in their Cortext worksp
 - Natural pauses are fine - ask "More ideas, or ready to explore these?"
 - Let the user decide when to switch modes
 
+### 5. Session Management
+
+**This conversation can be paused and resumed.**
+
+When the user indicates they want to stop (e.g., "let's stop here", "that's enough for now", "I need to go"):
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the conversation context for later resumption
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When detecting pause signals**, confirm with the user:
+- "Would you like me to save this session so we can continue later?"
+- If yes, use `/workspace.stop-conversation`
+
 ## Brainstorming Techniques
 
 Mix these approaches naturally:

@@ -125,6 +125,9 @@ ensure_main_branch
 
 print_success "Created conversation: ${CONVERSATION_NAME}"
 
+# Initialize session for resumption support
+init_session "$CONVERSATION_DIR" "$CONVERSATION_NAME" "{type_name}" "/workspace.{type_name}"
+
 # Copy template
 FILE="${CONVERSATION_DIR}/{type_name}.md"
 copy_template "{type_name}.md" "$FILE"
@@ -222,6 +225,21 @@ You are helping the user with a {type_name} conversation.
 - Update document during dialogue
 - Follow user's curiosity
 - Natural completion, not forced
+
+## Session Management
+
+**This conversation can be paused and resumed.**
+
+When the user indicates they want to stop:
+
+1. Save the session using `/workspace.stop-conversation`
+2. This preserves the conversation context for later resumption
+
+**Or** the user can explicitly run `/workspace.stop-conversation` at any time.
+
+**When detecting pause signals**, confirm with the user:
+- "Would you like me to save this session so we can continue later?"
+- If yes, use `/workspace.stop-conversation`
 ```
 
 ### Step 5: Update Registry
