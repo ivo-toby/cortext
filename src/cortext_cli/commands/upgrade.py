@@ -15,13 +15,18 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.syntax import Syntax
 
-from cortext_cli.commands.init import SCRIPT_API_VERSION, compute_generated_files_metadata
+from cortext_cli.commands.init import (
+    SCRIPT_API_VERSION,
+    compute_generated_files_metadata,
+    get_builtin_conversation_types,
+)
 from cortext_cli.utils import (
     FileStatus,
     VersionStatus,
     StepTracker,
     compute_file_hash,
     get_file_status,
+    get_commands_dir,
     get_scripts_dir,
     get_template_dir,
 )
@@ -301,6 +306,160 @@ def handle_legacy_workspace(workspace_dir: Path, dry_run: bool, yes: bool, verbo
     return True
 
 
+def add_missing_builtin_types(
+    workspace_dir: Path,
+    registry: dict,
+    dry_run: bool,
+    yes: bool,
+    verbose: bool,
+) -> int:
+    """Check for and add missing built-in conversation types.
+
+    Args:
+        workspace_dir: Workspace root directory
+        registry: Current registry dict
+        dry_run: If True, don't make changes
+        yes: If True, use default answers
+        verbose: Show detailed progress
+
+    Returns:
+        Number of types added
+    """
+    current_builtin_types = get_builtin_conversation_types()
+    existing_types = set(registry.get("conversation_types", {}).keys())
+    missing_types = set(current_builtin_types.keys()) - existing_types
+
+    if not missing_types:
+        return 0
+
+    console.print(f"\n[cyan]ℹ[/cyan]  Found {len(missing_types)} new built-in conversation type(s): {', '.join(missing_types)}")
+
+    if not yes and not dry_run:
+        if not Confirm.ask("Would you like to add these new types to your workspace?", default=True):
+            console.print("[dim]Skipping new types[/dim]")
+            return 0
+
+    added_count = 0
+    template_dir = get_template_dir()
+    scripts_dir = get_scripts_dir()
+
+    for type_id in missing_types:
+        type_config = current_builtin_types[type_id].copy()
+
+        if dry_run:
+            console.print(f"[dim]Would add: {type_id}[/dim]")
+            continue
+
+        try:
+            # Copy template file
+            template_name = Path(type_config["template"]).name
+            src_template = template_dir / template_name
+            dest_template = workspace_dir / type_config["template"]
+
+            if src_template.exists():
+                dest_template.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_template, dest_template)
+                if verbose:
+                    console.print(f"  Copied template: {template_name}")
+
+            # Copy script file
+            script_name = Path(type_config["script"]).name
+            src_script = scripts_dir / "bash" / script_name
+            dest_script = workspace_dir / type_config["script"]
+
+            if src_script.exists():
+                dest_script.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_script, dest_script)
+                dest_script.chmod(0o755)  # Make executable
+                if verbose:
+                    console.print(f"  Copied script: {script_name}")
+
+            # Create conversation folder
+            folder_path = workspace_dir / type_config["folder"]
+            folder_path.mkdir(parents=True, exist_ok=True)
+            (folder_path / ".gitkeep").touch()
+
+            # Compute generation metadata
+            try:
+                generated_metadata = compute_generated_files_metadata(workspace_dir, type_id, type_config)
+                type_config["generated_with"] = generated_metadata
+            except Exception as e:
+                if verbose:
+                    console.print(f"[yellow]⚠[/yellow] Could not compute hashes for {type_id}: {e}")
+
+            # Add to registry
+            registry["conversation_types"][type_id] = type_config
+
+            console.print(f"[green]✓[/green] Added: {type_id}")
+            added_count += 1
+
+        except Exception as e:
+            console.print(f"[red]✗[/red] Failed to add {type_id}: {e}")
+
+    return added_count
+
+
+def add_missing_slash_commands(
+    workspace_dir: Path,
+    dry_run: bool,
+    verbose: bool,
+) -> int:
+    """Check for and add missing slash command files.
+
+    Args:
+        workspace_dir: Workspace root directory
+        dry_run: If True, don't make changes
+        verbose: Show detailed progress
+
+    Returns:
+        Number of commands added
+    """
+    commands_dir = get_commands_dir()
+    if not commands_dir.exists():
+        return 0
+
+    claude_commands_dir = workspace_dir / ".claude" / "commands"
+    if not claude_commands_dir.exists():
+        return 0
+
+    # Get all command files from package
+    package_commands = {f.name for f in commands_dir.glob("*.md")}
+
+    # Get existing command files in workspace
+    workspace_commands = {f.name for f in claude_commands_dir.glob("*.md")}
+
+    # Find missing commands
+    missing_commands = package_commands - workspace_commands
+
+    if not missing_commands:
+        return 0
+
+    if verbose:
+        console.print(f"\n[cyan]ℹ[/cyan]  Found {len(missing_commands)} new slash command(s): {', '.join(missing_commands)}")
+
+    added_count = 0
+    for cmd_name in missing_commands:
+        if dry_run:
+            console.print(f"[dim]Would add command: {cmd_name}[/dim]")
+            continue
+
+        try:
+            src_file = commands_dir / cmd_name
+            dest_file = claude_commands_dir / cmd_name
+            shutil.copy2(src_file, dest_file)
+
+            if verbose:
+                console.print(f"[green]✓[/green] Added command: {cmd_name}")
+            added_count += 1
+        except Exception as e:
+            console.print(f"[red]✗[/red] Failed to add {cmd_name}: {e}")
+
+    if added_count > 0 and not verbose:
+        console.print(f"[green]✓[/green] Added {added_count} new slash command(s)")
+
+    return added_count
+
+
 def perform_upgrade(
     workspace_dir: Path,
     dry_run: bool,
@@ -338,6 +497,22 @@ def perform_upgrade(
     prompted_count = 0
 
     console.print("\nAnalyzing workspace...\n")
+
+    # Check for missing built-in types and add them
+    types_added = add_missing_builtin_types(workspace_dir, registry, dry_run, yes, verbose)
+    if types_added > 0:
+        upgraded_count += types_added
+        if not dry_run:
+            # Save registry with new types
+            registry_path.write_text(json.dumps(registry, indent=2))
+            # Reload conversation_types for further processing
+            conversation_types = registry.get("conversation_types", {})
+
+    # Check for missing slash commands and add them
+    commands_added = add_missing_slash_commands(workspace_dir, dry_run, verbose)
+    if commands_added > 0 and not dry_run:
+        # Commit the new command files to git if applicable
+        pass
 
     for type_id, type_config in conversation_types.items():
         is_built_in = type_config.get("built_in", False)
