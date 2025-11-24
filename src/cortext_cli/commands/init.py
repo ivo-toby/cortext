@@ -4,7 +4,8 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
+from importlib.metadata import version as get_package_version
 from pathlib import Path
 from typing import Optional
 
@@ -21,12 +22,25 @@ from cortext_cli.converters import (
 from cortext_cli.utils import (
     AGENT_CONFIG,
     StepTracker,
+    compute_file_hash,
     get_commands_dir,
     get_git_hooks_dir,
     get_hooks_dir,
     get_scripts_dir,
     get_template_dir,
 )
+
+
+def get_cortext_version() -> str:
+    """Get the current installed Cortext version."""
+    try:
+        return get_package_version("cortext-workspace")
+    except Exception:
+        return "0.0.0"
+
+
+# Current script API version for generated scripts
+SCRIPT_API_VERSION = "1.0"
 
 console = Console()
 
@@ -443,101 +457,179 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
         tracker.add_info("AI tool directories created")
 
 
+def compute_generated_files_metadata(workspace_dir: Path, type_id: str, type_config: dict) -> dict:
+    """Compute generation metadata for a conversation type's files.
+
+    Args:
+        workspace_dir: Workspace root directory
+        type_id: Type identifier (e.g., 'brainstorm')
+        type_config: Type configuration dict with paths
+
+    Returns:
+        Dict with generated_with metadata including file hashes
+    """
+    files_metadata = {}
+
+    # Hash script file if it exists
+    script_path = workspace_dir / type_config.get("script", "")
+    if script_path.exists():
+        files_metadata["script"] = {
+            "path": type_config.get("script"),
+            "original_hash": compute_file_hash(script_path)
+        }
+
+    # Hash template file if it exists
+    template_path = workspace_dir / type_config.get("template", "")
+    if template_path.exists():
+        files_metadata["template"] = {
+            "path": type_config.get("template"),
+            "original_hash": compute_file_hash(template_path)
+        }
+
+    # Hash Claude command file if it exists
+    command_name = type_config.get("command", "").lstrip("/").replace(".", "_")
+    claude_cmd_path = workspace_dir / ".claude" / "commands" / f"{command_name}.md"
+    if claude_cmd_path.exists():
+        files_metadata["command_claude"] = {
+            "path": f".claude/commands/{command_name}.md",
+            "original_hash": compute_file_hash(claude_cmd_path)
+        }
+
+    # Hash Gemini command file if it exists
+    gemini_cmd_path = workspace_dir / ".gemini" / "commands" / f"{command_name}.toml"
+    if gemini_cmd_path.exists():
+        files_metadata["command_gemini"] = {
+            "path": f".gemini/commands/{command_name}.toml",
+            "original_hash": compute_file_hash(gemini_cmd_path)
+        }
+
+    return {
+        "cortext_version": get_cortext_version(),
+        "script_api_version": SCRIPT_API_VERSION,
+        "files": files_metadata
+    }
+
+
+def get_builtin_conversation_types() -> dict:
+    """Get the definition of all built-in conversation types.
+
+    Returns:
+        Dictionary of conversation type definitions
+    """
+    return {
+        "brainstorm": {
+            "name": "Brainstorm",
+            "folder": "brainstorm",
+            "template": ".workspace/templates/brainstorm.md",
+            "command": "/workspace.brainstorm",
+            "script": ".workspace/scripts/bash/brainstorm.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Ideation and exploration",
+            "sections": ["goals", "ideas", "themes", "next-steps"],
+            "session_support": True,
+        },
+        "debug": {
+            "name": "Debug",
+            "folder": "debug",
+            "template": ".workspace/templates/debug-session.md",
+            "command": "/workspace.debug",
+            "script": ".workspace/scripts/bash/debug.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Problem solving and troubleshooting",
+            "sections": ["problem", "investigation", "solution", "learnings"],
+            "session_support": True,
+        },
+        "plan": {
+            "name": "Plan",
+            "folder": "plan",
+            "template": ".workspace/templates/feature-planning.md",
+            "command": "/workspace.plan",
+            "script": ".workspace/scripts/bash/plan.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Feature and project planning",
+            "sections": ["goals", "requirements", "approach", "tasks"],
+            "session_support": True,
+        },
+        "learn": {
+            "name": "Learn",
+            "folder": "learn",
+            "template": ".workspace/templates/learning-notes.md",
+            "command": "/workspace.learn",
+            "script": ".workspace/scripts/bash/learn.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Learning notes and documentation",
+            "sections": ["topic", "notes", "examples", "references"],
+            "session_support": True,
+        },
+        "meeting": {
+            "name": "Meeting",
+            "folder": "meeting",
+            "template": ".workspace/templates/meeting-notes.md",
+            "command": "/workspace.meeting",
+            "script": ".workspace/scripts/bash/meeting.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Meeting notes and action items",
+            "sections": ["attendees", "agenda", "notes", "actions"],
+            "session_support": True,
+        },
+        "review": {
+            "name": "Review",
+            "folder": "review",
+            "template": ".workspace/templates/review-template.md",
+            "command": "/workspace.review",
+            "script": ".workspace/scripts/bash/review.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Code and design review",
+            "sections": ["overview", "feedback", "suggestions", "decision"],
+            "session_support": True,
+        },
+        "projectmanage": {
+            "name": "Project Manage",
+            "folder": "projectmanage",
+            "template": ".workspace/templates/project-management.md",
+            "command": "/workspace.projectmanage",
+            "script": ".workspace/scripts/bash/projectmanage.sh",
+            "built_in": True,
+            "created": datetime.now().isoformat(),
+            "description": "Project management and tracking",
+            "sections": ["goals", "roadmap", "tasks", "status", "index"],
+            "session_support": True,
+        },
+    }
+
+
 def create_registry(workspace_dir: Path, tracker: StepTracker):
     """Create the initial conversation type registry."""
     registry_path = workspace_dir / ".workspace" / "registry.json"
 
+    current_version = get_cortext_version()
+    current_time = datetime.now(timezone.utc).isoformat()
+
     registry = {
-        "version": "1.0",
-        "created": datetime.now().isoformat(),
-        "conversation_types": {
-            "brainstorm": {
-                "name": "Brainstorm",
-                "folder": "brainstorm",
-                "template": ".workspace/templates/brainstorm.md",
-                "command": "/workspace.brainstorm",
-                "script": ".workspace/scripts/bash/brainstorm.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Ideation and exploration",
-                "sections": ["goals", "ideas", "themes", "next-steps"],
-                "session_support": True,
-            },
-            "debug": {
-                "name": "Debug",
-                "folder": "debug",
-                "template": ".workspace/templates/debug-session.md",
-                "command": "/workspace.debug",
-                "script": ".workspace/scripts/bash/debug.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Problem solving and troubleshooting",
-                "sections": ["problem", "investigation", "solution", "learnings"],
-                "session_support": True,
-            },
-            "plan": {
-                "name": "Plan",
-                "folder": "plan",
-                "template": ".workspace/templates/feature-planning.md",
-                "command": "/workspace.plan",
-                "script": ".workspace/scripts/bash/plan.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Feature and project planning",
-                "sections": ["goals", "requirements", "approach", "tasks"],
-                "session_support": True,
-            },
-            "learn": {
-                "name": "Learn",
-                "folder": "learn",
-                "template": ".workspace/templates/learning-notes.md",
-                "command": "/workspace.learn",
-                "script": ".workspace/scripts/bash/learn.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Learning notes and documentation",
-                "sections": ["topic", "notes", "examples", "references"],
-                "session_support": True,
-            },
-            "meeting": {
-                "name": "Meeting",
-                "folder": "meeting",
-                "template": ".workspace/templates/meeting-notes.md",
-                "command": "/workspace.meeting",
-                "script": ".workspace/scripts/bash/meeting.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Meeting notes and action items",
-                "sections": ["attendees", "agenda", "notes", "actions"],
-                "session_support": True,
-            },
-            "review": {
-                "name": "Review",
-                "folder": "review",
-                "template": ".workspace/templates/review-template.md",
-                "command": "/workspace.review",
-                "script": ".workspace/scripts/bash/review.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Code and design review",
-                "sections": ["overview", "feedback", "suggestions", "decision"],
-                "session_support": True,
-            },
-            "projectmanage": {
-                "name": "Project Manage",
-                "folder": "projectmanage",
-                "template": ".workspace/templates/project-management.md",
-                "command": "/workspace.projectmanage",
-                "script": ".workspace/scripts/bash/projectmanage.sh",
-                "built_in": True,
-                "created": datetime.now().isoformat(),
-                "description": "Project management and tracking",
-                "sections": ["goals", "roadmap", "tasks", "status", "index"],
-                "session_support": True,
-            },
+        "schema_version": "2.0",
+        "workspace_meta": {
+            "cortext_version": current_version,
+            "initialized": current_time,
+            "last_upgraded": None,
         },
+        "conversation_types": get_builtin_conversation_types(),
         "statistics": {"total_conversations": 0, "by_type": {}},
     }
+
+    # Add generated_with metadata to each conversation type
+    for type_id, type_config in registry["conversation_types"].items():
+        try:
+            generated_metadata = compute_generated_files_metadata(workspace_dir, type_id, type_config)
+            type_config["generated_with"] = generated_metadata
+        except Exception as e:
+            # If hash computation fails, continue without it
+            tracker.add_warning(f"Could not compute hashes for {type_id}: {e}")
 
     registry_path.write_text(json.dumps(registry, indent=2))
     tracker.add_step("Created conversation type registry")

@@ -9,6 +9,22 @@ from rich.console import Console
 console = Console()
 
 
+def _check_rag_dependencies():
+    """Check if RAG dependencies are installed."""
+    try:
+        import chromadb
+        import fastembed
+        return True
+    except ImportError:
+        console.print("[red]Error:[/red] RAG dependencies not installed")
+        console.print("\nInstall with:")
+        console.print("  [cyan]pip install 'cortext-workspace[rag]'[/cyan]")
+        console.print("  [cyan]pip install -e '.[rag]'[/cyan]  (for development)")
+        console.print("\nOr install all optional dependencies:")
+        console.print("  [cyan]pip install 'cortext-workspace[all]'[/cyan]")
+        raise typer.Exit(1)
+
+
 def search_command(
     query: str = typer.Argument(..., help="Search query"),
     semantic: bool = typer.Option(
@@ -58,6 +74,7 @@ def _semantic_search(
     limit: int,
 ) -> None:
     """Perform semantic search using RAG pipeline."""
+    _check_rag_dependencies()
     from cortext_rag import mcp_tools
 
     result = mcp_tools.search_semantic(

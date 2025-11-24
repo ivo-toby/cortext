@@ -1,10 +1,83 @@
 """Utility functions and classes for Cortext."""
 
+import hashlib
 import sys
+from enum import Enum
 from pathlib import Path
 
 from rich.console import Console
 from rich.tree import Tree
+
+
+class FileStatus(Enum):
+    """Status of a file during upgrade comparison."""
+    UNMODIFIED = "unmodified"
+    MODIFIED = "modified"
+    DELETED = "deleted"
+    UNKNOWN = "unknown"
+
+
+class VersionStatus(Enum):
+    """Status of workspace version relative to installed Cortext."""
+    LEGACY = "legacy"
+    UPGRADE_AVAILABLE = "upgrade_available"
+    CURRENT = "current"
+    NEWER_WORKSPACE = "newer_workspace"
+
+
+def compute_sha256(content: str) -> str:
+    """Compute SHA-256 hash of string content.
+
+    Args:
+        content: String content to hash
+
+    Returns:
+        Hash string in format "sha256:{hex_digest}"
+    """
+    hash_digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    return f"sha256:{hash_digest}"
+
+
+def compute_file_hash(path: Path) -> str:
+    """Compute SHA-256 hash of file content.
+
+    Args:
+        path: Path to file to hash
+
+    Returns:
+        Hash string in format "sha256:{hex_digest}"
+
+    Raises:
+        FileNotFoundError: If file does not exist
+    """
+    content = path.read_text(encoding="utf-8")
+    return compute_sha256(content)
+
+
+def get_file_status(path: Path, original_hash: str | None) -> FileStatus:
+    """Determine the modification status of a file.
+
+    Args:
+        path: Path to the file to check
+        original_hash: The original hash stored during generation, or None
+
+    Returns:
+        FileStatus indicating whether file is unmodified, modified, deleted, or unknown
+    """
+    if original_hash is None:
+        return FileStatus.UNKNOWN
+
+    if not path.exists():
+        return FileStatus.DELETED
+
+    try:
+        current_hash = compute_file_hash(path)
+        if current_hash == original_hash:
+            return FileStatus.UNMODIFIED
+        else:
+            return FileStatus.MODIFIED
+    except Exception:
+        return FileStatus.UNKNOWN
 
 console = Console()
 

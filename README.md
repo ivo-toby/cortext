@@ -16,6 +16,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 - **🔍 RAG Search** - Semantic search across all conversations using local embeddings
 - **🎯 Workflow Automation** - Bash scripts and slash commands for repeatable processes
 - **🪝 Event Hooks** - Extensible automation triggered on workspace events
+- **🔧 Safe Upgrades** - Hash-based tracking with smart prompts preserves customizations
 
 ---
 
@@ -28,11 +29,17 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 git clone https://github.com/ivo-toby/cortext.git
 cd cortext
 
-# Install with uv (recommended)
-uv tool install .
-
-# Or with pip
+# Basic installation (without RAG features)
 pip install -e .
+
+# Or with RAG support for semantic search
+pip install -e '.[rag]'
+
+# Or with all optional features
+pip install -e '.[all]'
+
+# Or with uv (recommended)
+uv tool install .
 
 # Verify installation
 cortext check
@@ -40,6 +47,10 @@ cortext check
 # Check version
 cortext -v
 ```
+
+**Optional Features:**
+- **RAG**: Semantic search with local embeddings (`pip install -e '.[rag]'`)
+- **All**: All optional features (`pip install -e '.[all]'`)
 
 ### Initialize Your Workspace
 
@@ -92,6 +103,10 @@ cortext resume --list              # List all resumable conversations
 cortext resume --list --type brainstorm  # Filter by type
 cortext resume "api design"        # Resume by search term
 cortext resume 001-brainstorm-api  # Resume by ID
+
+cortext upgrade                    # Upgrade workspace to current version
+cortext upgrade --dry-run          # Preview upgrade changes
+cortext upgrade --yes              # Auto-accept all upgrades
 ```
 
 ### MCP Server (AI Agent Integration)
@@ -212,6 +227,43 @@ Conversations can be paused and resumed with full context preservation:
 
 See **[Session Guide](Docs/session-guide.md)** for complete documentation.
 
+### Workspace Upgrades
+
+Cortext supports safe, incremental workspace upgrades that preserve your customizations:
+
+```bash
+# Check if upgrade is available
+cortext upgrade
+
+# Preview what would change
+cortext upgrade --dry-run
+
+# Upgrade non-interactively
+cortext upgrade --yes
+
+# Force regenerate a specific type
+cortext upgrade --regenerate my-custom-type
+
+# Only upgrade built-in types
+cortext upgrade --built-in-only
+```
+
+**How it works:**
+- New workspaces track file hashes automatically
+- Upgrades detect if you've modified files
+- Unmodified files upgrade silently
+- Modified files prompt for action (overwrite, keep, diff, create .new)
+- All overwrites create timestamped backups
+
+**Upgrade options for modified files:**
+1. **Overwrite** - Backup to `.workspace/backup/` and update
+2. **Keep** - Leave your version unchanged
+3. **Create .new** - Generate `.new` files for manual merge
+4. **Show diff** - View what changed
+5. **Skip** - Don't upgrade this file
+
+See **[Upgrade Guide](Docs/upgrade-guide.md)** for complete documentation and **[CHANGELOG.md](CHANGELOG.md)** for version history.
+
 ### Git Workflow
 
 All conversations commit directly to main with tags marking boundaries:
@@ -233,8 +285,15 @@ Commits are structured and searchable:
 
 ### RAG Pipeline
 
-Semantic search across your workspace using local embeddings (included by default).
+Semantic search across your workspace using local embeddings (optional feature).
 
+**Installation:**
+```bash
+pip install -e '.[rag]'  # For development
+# Or: pip install 'cortext-workspace[rag]'
+```
+
+**Usage:**
 ```bash
 # Embed workspace for semantic search
 cortext embed --all
