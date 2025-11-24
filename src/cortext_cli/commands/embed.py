@@ -9,6 +9,22 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 console = Console()
 
 
+def _check_rag_dependencies():
+    """Check if RAG dependencies are installed."""
+    try:
+        import chromadb
+        import fastembed
+        return True
+    except ImportError:
+        console.print("[red]Error:[/red] RAG dependencies not installed")
+        console.print("\nInstall with:")
+        console.print("  [cyan]pip install 'cortext-workspace[rag]'[/cyan]")
+        console.print("  [cyan]pip install -e '.[rag]'[/cyan]  (for development)")
+        console.print("\nOr install all optional dependencies:")
+        console.print("  [cyan]pip install 'cortext-workspace[all]'[/cyan]")
+        raise typer.Exit(1)
+
+
 def embed_command(
     path: str = typer.Argument(None, help="Path to file or directory to embed"),
     all_workspace: bool = typer.Option(
@@ -25,6 +41,7 @@ def embed_command(
         cortext embed ./docs/research.pdf
         cortext embed --all
     """
+    _check_rag_dependencies()
     from cortext_rag import mcp_tools
 
     if not path and not all_workspace:

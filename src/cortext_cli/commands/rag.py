@@ -11,6 +11,22 @@ console = Console()
 app = typer.Typer(help="RAG pipeline management commands")
 
 
+def _check_rag_dependencies():
+    """Check if RAG dependencies are installed."""
+    try:
+        import chromadb
+        import fastembed
+        return True
+    except ImportError:
+        console.print("[red]Error:[/red] RAG dependencies not installed")
+        console.print("\nInstall with:")
+        console.print("  [cyan]pip install 'cortext-workspace[rag]'[/cyan]")
+        console.print("  [cyan]pip install -e '.[rag]'[/cyan]  (for development)")
+        console.print("\nOr install all optional dependencies:")
+        console.print("  [cyan]pip install 'cortext-workspace[all]'[/cyan]")
+        raise typer.Exit(1)
+
+
 @app.command("status")
 def rag_status() -> None:
     """Show RAG embedding statistics.
@@ -20,6 +36,7 @@ def rag_status() -> None:
     Example:
         cortext rag status
     """
+    _check_rag_dependencies()
     from cortext_rag import mcp_tools
 
     workspace_path = Path.cwd()

@@ -29,11 +29,17 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 git clone https://github.com/ivo-toby/cortext.git
 cd cortext
 
-# Install with uv (recommended)
-uv tool install .
-
-# Or with pip
+# Basic installation (without RAG features)
 pip install -e .
+
+# Or with RAG support for semantic search
+pip install -e '.[rag]'
+
+# Or with all optional features
+pip install -e '.[all]'
+
+# Or with uv (recommended)
+uv tool install .
 
 # Verify installation
 cortext check
@@ -41,6 +47,10 @@ cortext check
 # Check version
 cortext -v
 ```
+
+**Optional Features:**
+- **RAG**: Semantic search with local embeddings (`pip install -e '.[rag]'`)
+- **All**: All optional features (`pip install -e '.[all]'`)
 
 ### Initialize Your Workspace
 
@@ -275,8 +285,15 @@ Commits are structured and searchable:
 
 ### RAG Pipeline
 
-Semantic search across your workspace using local embeddings (included by default).
+Semantic search across your workspace using local embeddings (optional feature).
 
+**Installation:**
+```bash
+pip install -e '.[rag]'  # For development
+# Or: pip install 'cortext-workspace[rag]'
+```
+
+**Usage:**
 ```bash
 # Embed workspace for semantic search
 cortext embed --all
