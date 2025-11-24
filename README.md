@@ -52,6 +52,26 @@ cortext -v
 - **RAG**: Semantic search with local embeddings (`pip install -e '.[rag]'`)
 - **All**: All optional features (`pip install -e '.[all]'`)
 
+### Troubleshooting Installation
+
+If you encounter `ModuleNotFoundError` after pulling updates:
+
+```bash
+# If you installed with pip
+pip install -e . --force-reinstall
+
+# If you installed with uv pip
+uv pip install -e .
+
+# If you installed with uv tool
+uv tool install --reinstall --force .
+```
+
+**Common issues:**
+- `ModuleNotFoundError: No module named 'packaging'` - Dependencies not installed, use `--force-reinstall`
+- Virtual environment caching - Deactivate and reactivate your venv, or use `--force-reinstall`
+- uv tool cache - Use `uv tool install --reinstall --force .` to clear cache
+
 ### Initialize Your Workspace
 
 ```bash
