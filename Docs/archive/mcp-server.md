@@ -81,6 +81,8 @@ The server will be available in all Claude Code sessions once registered.
 
 **Note**: The `cortext init --mcp` command attempts to run this registration automatically. If it fails (e.g., Claude CLI not available), you'll see instructions to run the command manually.
 
+**Note**: Previous versions used `--env WORKSPACE_PATH=...` in the registration. This is no longer needed - tools now accept `workspace_path` as a parameter.
+
 #### OpenCode
 
 For OpenCode (`opencode.json` at workspace root):
@@ -92,10 +94,7 @@ For OpenCode (`opencode.json` at workspace root):
     "cortext": {
       "type": "local",
       "command": ["cortext-mcp"],
-      "enabled": true,
-      "environment": {
-        "WORKSPACE_PATH": "/absolute/path/to/workspace"
-      }
+      "enabled": true
     }
   }
 }
@@ -111,9 +110,6 @@ For Gemini CLI (`~/.gemini/settings.json`):
     "cortext": {
       "command": "cortext-mcp",
       "args": [],
-      "env": {
-        "WORKSPACE_PATH": "/absolute/path/to/workspace"
-      },
       "trust": true
     }
   }
@@ -131,6 +127,7 @@ Search across conversations, notes, and research.
 - `type` (optional): Filter by conversation type (brainstorm, debug, plan, learn, meeting, review, all)
 - `date_range` (optional): Filter by date. Supports YYYY-MM (month) or YYYY-MM-DD (day) format
 - `limit` (optional): Maximum results (default: 10)
+- `workspace_path` (optional): Workspace root path (defaults to current directory)
 
 **Examples:**
 ```
@@ -146,6 +143,7 @@ Get relevant context for a topic from past conversations.
 **Parameters:**
 - `topic` (required): Topic to search for
 - `max_results` (optional): Maximum conversations to return (default: 5)
+- `workspace_path` (optional): Workspace root path (defaults to current directory)
 
 **Example:**
 ```
@@ -158,6 +156,7 @@ Retrieve past decisions on a topic.
 
 **Parameters:**
 - `topic` (required): Topic or decision area
+- `workspace_path` (optional): Workspace root path (defaults to current directory)
 
 **Example:**
 ```
@@ -247,6 +246,52 @@ Get workspace embedding statistics and status.
 ```
 Check embedding status to see how many documents are searchable
 ```
+
+## Upgrading from Previous Versions
+
+If you previously configured MCP with `WORKSPACE_PATH` environment variable, here's how to upgrade:
+
+### What Changed
+
+- MCP tools now accept `workspace_path` as an optional parameter
+- The `WORKSPACE_PATH` environment variable is no longer used
+- Registrations are now workspace-agnostic (single registration works for all workspaces)
+
+### Upgrade Steps
+
+**For most users - no action required:**
+
+Your existing registration will continue to work. The old `WORKSPACE_PATH` env var is ignored, and the server uses the current working directory instead. When Claude Code (or other agents) spawn the MCP server from your project directory, it will work correctly.
+
+**For cleanest setup (recommended for multi-workspace users):**
+
+```bash
+# Claude Code
+claude mcp remove cortext
+claude mcp add --transport stdio --scope local cortext -- cortext-mcp
+
+# Gemini CLI - edit ~/.gemini/settings.json
+# Remove the "env" section from the cortext entry
+
+# OpenCode - edit opencode.json
+# Remove the "environment" section from the cortext entry
+```
+
+Or simply run:
+```bash
+cortext mcp install --force
+```
+
+### Troubleshooting Upgrade Issues
+
+**"already exists" error:**
+```bash
+claude mcp remove cortext
+cortext init
+```
+
+**Wrong workspace being searched:**
+The AI agent should pass the `workspace_path` parameter explicitly. Most AI agents will do this automatically based on the current working directory.
 
 ## Requirements
 
