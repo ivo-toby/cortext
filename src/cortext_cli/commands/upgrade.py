@@ -27,6 +27,7 @@ from cortext_cli.utils import (
     compute_file_hash,
     get_file_status,
     get_commands_dir,
+    get_hooks_dir,
     get_scripts_dir,
     get_template_dir,
 )
@@ -460,6 +461,164 @@ def add_missing_slash_commands(
     return added_count
 
 
+def upgrade_core_infrastructure(
+    workspace_dir: Path,
+    dry_run: bool,
+    verbose: bool,
+) -> int:
+    """Upgrade core infrastructure files that users should not modify.
+
+    These files are always overwritten without checking for modifications,
+    as they contain core functionality that should stay in sync with Cortext.
+
+    Args:
+        workspace_dir: Workspace root directory
+        dry_run: If True, don't make changes
+        verbose: Show detailed progress
+
+    Returns:
+        Number of files upgraded
+    """
+    scripts_dir = get_scripts_dir()
+    hooks_dir = get_hooks_dir()
+    template_dir = get_template_dir()
+
+    if not scripts_dir.exists():
+        if verbose:
+            console.print("[yellow]⚠[/yellow] Scripts directory not found in package")
+        return 0
+
+    upgraded_count = 0
+
+    # Upgrade all bash scripts
+    bash_src = scripts_dir / "bash"
+    bash_dest = workspace_dir / ".workspace" / "scripts" / "bash"
+
+    if bash_src.exists() and bash_dest.exists():
+        for script in bash_src.glob("*.sh"):
+            dest_file = bash_dest / script.name
+
+            if dry_run:
+                if verbose:
+                    console.print(f"[dim]Would upgrade: {script.name}[/dim]")
+                upgraded_count += 1
+            else:
+                try:
+                    import os
+                    shutil.copy2(script, dest_file)
+                    # Make executable on Unix systems
+                    if os.name != "nt":
+                        os.chmod(dest_file, 0o755)
+
+                    if verbose:
+                        console.print(f"[green]✓[/green] Updated: {script.name}")
+                    upgraded_count += 1
+                except Exception as e:
+                    console.print(f"[red]✗[/red] Failed to upgrade {script.name}: {e}")
+
+    # Upgrade PowerShell scripts
+    ps_src = scripts_dir / "powershell"
+    ps_dest = workspace_dir / ".workspace" / "scripts" / "powershell"
+
+    if ps_src.exists() and ps_dest.exists():
+        for script in ps_src.glob("*.ps1"):
+            dest_file = ps_dest / script.name
+
+            if dry_run:
+                if verbose:
+                    console.print(f"[dim]Would upgrade: {script.name}[/dim]")
+                upgraded_count += 1
+            else:
+                try:
+                    shutil.copy2(script, dest_file)
+                    if verbose:
+                        console.print(f"[green]✓[/green] Updated: {script.name}")
+                    upgraded_count += 1
+                except Exception as e:
+                    console.print(f"[red]✗[/red] Failed to upgrade {script.name}: {e}")
+
+    # Upgrade hooks dispatcher
+    if hooks_dir.exists():
+        dispatcher_src = hooks_dir / "dispatch.sh"
+        dispatcher_dest = workspace_dir / ".workspace" / "hooks" / "dispatch.sh"
+
+        if dispatcher_src.exists() and dispatcher_dest.parent.exists():
+            if dry_run:
+                if verbose:
+                    console.print(f"[dim]Would upgrade: dispatch.sh[/dim]")
+                upgraded_count += 1
+            else:
+                try:
+                    import os
+                    shutil.copy2(dispatcher_src, dispatcher_dest)
+                    if os.name != "nt":
+                        os.chmod(dispatcher_dest, 0o755)
+
+                    if verbose:
+                        console.print(f"[green]✓[/green] Updated: dispatch.sh")
+                    upgraded_count += 1
+                except Exception as e:
+                    console.print(f"[red]✗[/red] Failed to upgrade dispatch.sh: {e}")
+
+        # Upgrade hook scripts
+        for category in ["conversation", "git"]:
+            category_src = hooks_dir / category
+            if not category_src.exists():
+                continue
+
+            for event_dir in category_src.iterdir():
+                if not event_dir.is_dir():
+                    continue
+
+                dest_event_dir = workspace_dir / ".workspace" / "hooks" / category / event_dir.name
+                if not dest_event_dir.exists():
+                    if not dry_run:
+                        dest_event_dir.mkdir(parents=True, exist_ok=True)
+
+                for hook in event_dir.glob("*.sh"):
+                    dest_hook = dest_event_dir / hook.name
+
+                    if dry_run:
+                        if verbose:
+                            console.print(f"[dim]Would upgrade: {category}/{event_dir.name}/{hook.name}[/dim]")
+                        upgraded_count += 1
+                    else:
+                        try:
+                            import os
+                            shutil.copy2(hook, dest_hook)
+                            if os.name != "nt":
+                                os.chmod(dest_hook, 0o755)
+
+                            if verbose:
+                                console.print(f"[green]✓[/green] Updated: {category}/{event_dir.name}/{hook.name}")
+                            upgraded_count += 1
+                        except Exception as e:
+                            console.print(f"[red]✗[/red] Failed to upgrade {hook.name}: {e}")
+
+    # Upgrade hooks documentation
+    hooks_doc_src = template_dir / "hooks.md"
+    hooks_doc_dest = workspace_dir / ".workspace" / "docs" / "hooks.md"
+
+    if hooks_doc_src.exists() and hooks_doc_dest.parent.exists():
+        if dry_run:
+            if verbose:
+                console.print(f"[dim]Would upgrade: hooks.md documentation[/dim]")
+            upgraded_count += 1
+        else:
+            try:
+                shutil.copy2(hooks_doc_src, hooks_doc_dest)
+                if verbose:
+                    console.print(f"[green]✓[/green] Updated: hooks.md documentation")
+                upgraded_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to upgrade hooks.md: {e}")
+
+    if upgraded_count > 0 and not verbose and not dry_run:
+        console.print(f"[green]✓[/green] Updated {upgraded_count} infrastructure file(s)")
+
+    return upgraded_count
+
+
 def perform_upgrade(
     workspace_dir: Path,
     dry_run: bool,
@@ -513,6 +672,11 @@ def perform_upgrade(
     if commands_added > 0 and not dry_run:
         # Commit the new command files to git if applicable
         pass
+
+    # Upgrade core infrastructure files (scripts, hooks, etc.)
+    infrastructure_upgraded = upgrade_core_infrastructure(workspace_dir, dry_run, verbose)
+    if infrastructure_upgraded > 0:
+        upgraded_count += infrastructure_upgraded
 
     for type_id, type_config in conversation_types.items():
         is_built_in = type_config.get("built_in", False)
