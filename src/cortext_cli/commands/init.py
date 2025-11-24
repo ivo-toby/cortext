@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib.metadata import version as get_package_version
 from pathlib import Path
 from typing import Optional
@@ -609,7 +609,7 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
     registry_path = workspace_dir / ".workspace" / "registry.json"
 
     current_version = get_cortext_version()
-    current_time = datetime.utcnow().isoformat() + "Z"
+    current_time = datetime.now(timezone.utc).isoformat()
 
     registry = {
         "schema_version": "2.0",

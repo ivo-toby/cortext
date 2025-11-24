@@ -2,7 +2,7 @@
 
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from difflib import unified_diff
 from importlib.metadata import version as get_package_version
 from pathlib import Path
@@ -271,7 +271,7 @@ def handle_legacy_workspace(workspace_dir: Path, dry_run: bool, yes: bool, verbo
     registry = json.loads(registry_path.read_text())
 
     current_version = get_cortext_version()
-    current_time = datetime.utcnow().isoformat() + "Z"
+    current_time = datetime.now(timezone.utc).isoformat()
 
     # Add workspace_meta if missing
     if "workspace_meta" not in registry:
@@ -614,7 +614,7 @@ def perform_upgrade(
 
     # Update registry metadata
     if not dry_run:
-        registry["workspace_meta"]["last_upgraded"] = datetime.utcnow().isoformat() + "Z"
+        registry["workspace_meta"]["last_upgraded"] = datetime.now(timezone.utc).isoformat()
         registry["workspace_meta"]["cortext_version"] = get_cortext_version()
         registry_path.write_text(json.dumps(registry, indent=2))
 
