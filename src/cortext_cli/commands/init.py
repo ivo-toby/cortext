@@ -12,6 +12,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
+from rich.status import Status
 
 from cortext_cli.converters import (
     convert_claude_commands_to_gemini,
@@ -94,6 +95,9 @@ def init(
     no_mcp: bool = typer.Option(
         False, help="Disable MCP server configuration"
     ),
+    quick: bool = typer.Option(
+        False, help="Quick mode: skip MCP check and registration for faster init"
+    ),
 ):
     """Initialize a new Cortext workspace.
 
@@ -133,7 +137,7 @@ def init(
         console.print(
             f"\n[yellow]⚠ Directory already exists:[/yellow] {workspace_dir}"
         )
-        if not Confirm.ask("Initialize workspace here anyway?"):
+        if not quick and not Confirm.ask("Initialize workspace here anyway?"):
             console.print("[dim]Cancelled.[/dim]")
             raise typer.Exit()
 
@@ -180,7 +184,7 @@ def init(
         install_git_hooks(workspace_dir, tracker)
 
         # Configure MCP server registration
-        configure_mcp(workspace_dir, ai, mcp, no_mcp, tracker)
+        configure_mcp(workspace_dir, ai, mcp, no_mcp, quick, tracker)
 
         # Initial git commit
         try:
@@ -800,17 +804,53 @@ def configure_mcp(
     ai: str,
     mcp_flag: Optional[bool],
     no_mcp_flag: bool,
+    quick: bool,
     tracker: StepTracker,
 ):
     """Configure MCP server registration for AI agents."""
-    # Determine if MCP should be configured
-    should_configure_mcp = _determine_mcp_preference(mcp_flag, no_mcp_flag)
+    # Quick mode skips MCP entirely
+    if quick and mcp_flag is None:
+        tracker.add_info("MCP configuration skipped (quick mode). Run 'cortext mcp add' later to configure.")
+        return
 
-    if not should_configure_mcp:
+    # Determine which agents to configure
+    agents_to_configure = _get_agents_from_ai_option(ai)
+
+    # Check which agents already have MCP installed
+    already_installed = {}
+    needs_install = []
+
+    for agent in agents_to_configure:
+        if agent == "claude":
+            already_installed[agent] = _check_claude_mcp_installed()
+        elif agent == "gemini":
+            already_installed[agent] = _check_gemini_mcp_installed()
+        elif agent == "opencode":
+            already_installed[agent] = _check_opencode_mcp_installed(workspace_dir)
+        else:
+            already_installed[agent] = False
+
+        if not already_installed[agent]:
+            needs_install.append(agent)
+
+    # Report already installed agents
+    installed_agents = [a for a in agents_to_configure if already_installed.get(a)]
+    if installed_agents:
+        agent_list = ", ".join(installed_agents)
+        tracker.add_info(f"MCP already configured for: {agent_list}")
+
+    # If all agents already have MCP installed, we're done
+    if not needs_install:
+        return
+
+    # Determine if MCP should be configured for remaining agents
+    should_configure = _determine_mcp_preference(mcp_flag, no_mcp_flag, quick)
+
+    if not should_configure:
         tracker.add_info("MCP server configuration skipped")
         return
 
-    # Check if cortext-mcp is available
+    # Cache the cortext-mcp availability check
     mcp_available = _check_mcp_command()
     if not mcp_available:
         tracker.add_warning(
@@ -818,12 +858,9 @@ def configure_mcp(
             "MCP configs will be created but may not work until cortext-mcp is available."
         )
 
-    # Determine which agents to configure
-    agents_to_configure = _get_agents_from_ai_option(ai)
-
-    # Install MCP config for each agent
+    # Install MCP config for each agent that needs it
     configured_agents = []
-    for agent in agents_to_configure:
+    for agent in needs_install:
         if _install_mcp_config_for_agent(workspace_dir, agent, tracker):
             configured_agents.append(agent)
 
@@ -834,13 +871,17 @@ def configure_mcp(
         tracker.add_info("No MCP configurations created")
 
 
-def _determine_mcp_preference(mcp_flag: Optional[bool], no_mcp_flag: bool) -> bool:
+def _determine_mcp_preference(mcp_flag: Optional[bool], no_mcp_flag: bool, quick: bool = False) -> bool:
     """Determine if MCP should be configured based on flags and user prompt."""
     # Flags take precedence
     if no_mcp_flag:
         return False
     if mcp_flag is not None:
         return mcp_flag
+
+    # Quick mode defaults to True without prompting
+    if quick:
+        return True
 
     # Interactive prompt
     return Confirm.ask(
@@ -859,6 +900,54 @@ def _check_mcp_command() -> bool:
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def _check_claude_mcp_installed() -> bool:
+    """Check if cortext MCP is already registered with Claude Code."""
+    try:
+        result = subprocess.run(
+            ["claude", "mcp", "list"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            return "cortext" in result.stdout.lower()
+        return False
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+def _check_gemini_mcp_installed() -> bool:
+    """Check if cortext MCP is already configured for Gemini."""
+    import json as json_module
+
+    settings_path = Path.home() / ".gemini" / "settings.json"
+    if not settings_path.exists():
+        return False
+
+    try:
+        settings = json_module.loads(settings_path.read_text())
+        mcp_servers = settings.get("mcpServers", {})
+        return "cortext" in mcp_servers
+    except (json_module.JSONDecodeError, IOError):
+        return False
+
+
+def _check_opencode_mcp_installed(workspace_dir: Path) -> bool:
+    """Check if cortext MCP is already configured for OpenCode."""
+    import json as json_module
+
+    config_path = workspace_dir / "opencode.json"
+    if not config_path.exists():
+        return False
+
+    try:
+        config = json_module.loads(config_path.read_text())
+        mcp_config = config.get("mcp", {})
+        return "cortext" in mcp_config
+    except (json_module.JSONDecodeError, IOError):
         return False
 
 
@@ -887,17 +976,17 @@ def _install_mcp_config_for_agent(
 
 def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
     """Install MCP config for Claude Code using 'claude mcp add' command."""
-    # Try to register the MCP server using claude CLI
+    # Try to register the MCP server using claude CLI with progress feedback
     try:
-        # Check if claude CLI is available
-        result = subprocess.run(
-            ["claude", "mcp", "add", "--transport", "stdio", "--scope", "local",
-             "cortext", "--", "cortext-mcp"],
-            cwd=workspace_dir,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+        with Status("[cyan]Registering MCP server with Claude Code...[/cyan]", console=console):
+            result = subprocess.run(
+                ["claude", "mcp", "add", "--transport", "stdio",
+                 "cortext", "--", "cortext-mcp"],
+                cwd=workspace_dir,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
         if result.returncode == 0:
             tracker.add_step("Registered cortext-mcp with Claude Code")
@@ -909,14 +998,25 @@ def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
             # Fall back to instructions
             tracker.add_warning(
                 "Could not auto-register MCP server. "
-                "Run: claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+                "Run: claude mcp add --transport stdio cortext -- cortext-mcp"
             )
             return False
-    except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
-        # Claude CLI not available or command failed
+    except subprocess.TimeoutExpired:
+        tracker.add_warning(
+            "MCP registration timed out after 10s. Run manually:\n"
+            "  claude mcp add --transport stdio cortext -- cortext-mcp"
+        )
+        return False
+    except FileNotFoundError:
         tracker.add_warning(
             "Claude CLI not available. To enable MCP server, run:\n"
-            "  claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
+            "  claude mcp add --transport stdio cortext -- cortext-mcp"
+        )
+        return False
+    except subprocess.CalledProcessError:
+        tracker.add_warning(
+            "MCP registration failed. Run manually:\n"
+            "  claude mcp add --transport stdio cortext -- cortext-mcp"
         )
         return False
 
@@ -925,32 +1025,33 @@ def _install_gemini_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
     """Install MCP config for Gemini CLI (global settings.json merge)."""
     import json as json_module
 
-    # Gemini uses global settings file
-    settings_path = Path.home() / ".gemini" / "settings.json"
-    settings_path.parent.mkdir(parents=True, exist_ok=True)
+    with Status("[cyan]Configuring MCP for Gemini...[/cyan]", console=console):
+        # Gemini uses global settings file
+        settings_path = Path.home() / ".gemini" / "settings.json"
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Read existing settings or create new
-    if settings_path.exists():
-        try:
-            settings = json_module.loads(settings_path.read_text())
-        except json_module.JSONDecodeError:
+        # Read existing settings or create new
+        if settings_path.exists():
+            try:
+                settings = json_module.loads(settings_path.read_text())
+            except json_module.JSONDecodeError:
+                settings = {}
+        else:
             settings = {}
-    else:
-        settings = {}
 
-    # Ensure mcpServers exists
-    if "mcpServers" not in settings:
-        settings["mcpServers"] = {}
+        # Ensure mcpServers exists
+        if "mcpServers" not in settings:
+            settings["mcpServers"] = {}
 
-    # Add/update cortext server entry
-    settings["mcpServers"]["cortext"] = {
-        "command": "cortext-mcp",
-        "args": [],
-        "trust": True,
-    }
+        # Add/update cortext server entry
+        settings["mcpServers"]["cortext"] = {
+            "command": "cortext-mcp",
+            "args": [],
+            "trust": True,
+        }
 
-    # Write back
-    settings_path.write_text(json_module.dumps(settings, indent=2))
+        # Write back
+        settings_path.write_text(json_module.dumps(settings, indent=2))
     return True
 
 
@@ -958,49 +1059,50 @@ def _install_opencode_mcp_config(workspace_dir: Path, tracker: StepTracker) -> b
     """Install MCP config for OpenCode (workspace root opencode.json)."""
     import json as json_module
 
-    template_dir = get_template_dir()
-    template_path = template_dir / "opencode_config.json"
+    with Status("[cyan]Configuring MCP for OpenCode...[/cyan]", console=console):
+        template_dir = get_template_dir()
+        template_path = template_dir / "opencode_config.json"
 
-    if not template_path.exists():
-        tracker.add_warning("OpenCode MCP config template not found")
-        return False
+        if not template_path.exists():
+            tracker.add_warning("OpenCode MCP config template not found")
+            return False
 
-    # Check if opencode.json already exists
-    config_path = workspace_dir / "opencode.json"
+        # Check if opencode.json already exists
+        config_path = workspace_dir / "opencode.json"
 
-    if config_path.exists():
-        # Merge with existing config
-        try:
-            existing_config = json_module.loads(config_path.read_text())
-            if "mcp" not in existing_config:
-                existing_config["mcp"] = {}
+        if config_path.exists():
+            # Merge with existing config
+            try:
+                existing_config = json_module.loads(config_path.read_text())
+                if "mcp" not in existing_config:
+                    existing_config["mcp"] = {}
 
-            # Add cortext MCP server
-            existing_config["mcp"]["cortext"] = {
-                "type": "local",
-                "command": ["cortext-mcp"],
-                "enabled": True,
-            }
+                # Add cortext MCP server
+                existing_config["mcp"]["cortext"] = {
+                    "type": "local",
+                    "command": ["cortext-mcp"],
+                    "enabled": True,
+                }
 
-            config_path.write_text(json_module.dumps(existing_config, indent=2))
-            tracker.add_step("Merged MCP config into existing opencode.json")
-            return True
-        except json_module.JSONDecodeError:
-            # If existing file is invalid, backup and create new
-            config_path.rename(config_path.with_suffix(".json.bak"))
-            tracker.add_warning("Backed up invalid opencode.json")
+                config_path.write_text(json_module.dumps(existing_config, indent=2))
+                tracker.add_step("Merged MCP config into existing opencode.json")
+                return True
+            except json_module.JSONDecodeError:
+                # If existing file is invalid, backup and create new
+                config_path.rename(config_path.with_suffix(".json.bak"))
+                tracker.add_warning("Backed up invalid opencode.json")
 
-    # Create new config without WORKSPACE_PATH
-    new_config = {
-        "mcp": {
-            "cortext": {
-                "type": "local",
-                "command": ["cortext-mcp"],
-                "enabled": True,
+        # Create new config without WORKSPACE_PATH
+        new_config = {
+            "mcp": {
+                "cortext": {
+                    "type": "local",
+                    "command": ["cortext-mcp"],
+                    "enabled": True,
+                }
             }
         }
-    }
 
-    config_path.write_text(json_module.dumps(new_config, indent=2))
-    tracker.add_step("Created opencode.json with MCP config")
+        config_path.write_text(json_module.dumps(new_config, indent=2))
+        tracker.add_step("Created opencode.json with MCP config")
     return True

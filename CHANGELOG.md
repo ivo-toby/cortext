@@ -60,6 +60,23 @@ cortext init
 
 ### Added
 
+#### Init Performance Improvements
+- **`--quick` flag**: Skip MCP check and registration for faster init in CI/scripts
+  - Example: `cortext init --quick /path/to/workspace`
+  - Message informs user to run `cortext mcp add` later
+- **Existing installation detection**: Checks if MCP is already configured before prompting
+  - Claude: Runs `claude mcp list` to check for cortext
+  - Gemini: Checks `~/.gemini/settings.json` for cortext entry
+  - OpenCode: Checks `opencode.json` for cortext entry
+  - Skips prompt and shows "MCP already configured" when detected
+- **Progress feedback**: Shows spinner during slow MCP registration operations
+  - "Registering MCP server with Claude Code..."
+  - "Configuring MCP for Gemini..."
+  - "Configuring MCP for OpenCode..."
+- **Reduced timeout**: MCP registration timeout reduced from 30s to 10s
+  - Clear error message on timeout with manual command to run
+- **Cached command checks**: Single `which cortext-mcp` call per init run
+
 #### RAG Tools in MCP Server
 - **Semantic Search via MCP**: AI agents can now use semantic search tools through MCP
   - `embed_document` - Embed specific documents/conversations for semantic search
