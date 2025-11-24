@@ -210,6 +210,8 @@ Conversations can be paused and resumed with full context preservation:
 2. Injects conversation context and history
 3. Continues naturally from where you stopped
 
+See **[Session Guide](Docs/session-guide.md)** for complete documentation.
+
 ### Git Workflow
 
 All conversations commit directly to main with tags marking boundaries:
