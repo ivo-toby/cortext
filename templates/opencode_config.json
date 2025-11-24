@@ -4,10 +4,7 @@
     "cortext": {
       "type": "local",
       "command": ["cortext-mcp"],
-      "enabled": true,
-      "environment": {
-        "WORKSPACE_PATH": "{{WORKSPACE_PATH}}"
-      }
+      "enabled": true
     }
   }
 }

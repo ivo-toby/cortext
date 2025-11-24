@@ -2,10 +2,7 @@
   "mcpServers": {
     "cortext": {
       "command": "cortext-mcp",
-      "args": [],
-      "env": {
-        "WORKSPACE_PATH": "{{WORKSPACE_PATH}}"
-      }
+      "args": []
     }
   }
 }

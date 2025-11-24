@@ -892,8 +892,7 @@ def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
         # Check if claude CLI is available
         result = subprocess.run(
             ["claude", "mcp", "add", "--transport", "stdio", "--scope", "local",
-             "cortext", "--env", f"WORKSPACE_PATH={workspace_dir.absolute()}",
-             "--", "cortext-mcp"],
+             "cortext", "--", "cortext-mcp"],
             cwd=workspace_dir,
             capture_output=True,
             text=True,
@@ -910,14 +909,14 @@ def _install_claude_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
             # Fall back to instructions
             tracker.add_warning(
                 "Could not auto-register MCP server. "
-                f"Run: claude mcp add --transport stdio --scope local cortext --env WORKSPACE_PATH={workspace_dir.absolute()} -- cortext-mcp"
+                "Run: claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
             )
             return False
     except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
         # Claude CLI not available or command failed
         tracker.add_warning(
             "Claude CLI not available. To enable MCP server, run:\n"
-            f"  claude mcp add --transport stdio --scope local cortext --env WORKSPACE_PATH={workspace_dir.absolute()} -- cortext-mcp"
+            "  claude mcp add --transport stdio --scope local cortext -- cortext-mcp"
         )
         return False
 
@@ -947,7 +946,6 @@ def _install_gemini_mcp_config(workspace_dir: Path, tracker: StepTracker) -> boo
     settings["mcpServers"]["cortext"] = {
         "command": "cortext-mcp",
         "args": [],
-        "env": {"WORKSPACE_PATH": str(workspace_dir.absolute())},
         "trust": True,
     }
 
@@ -982,9 +980,6 @@ def _install_opencode_mcp_config(workspace_dir: Path, tracker: StepTracker) -> b
                 "type": "local",
                 "command": ["cortext-mcp"],
                 "enabled": True,
-                "environment": {
-                    "WORKSPACE_PATH": str(workspace_dir.absolute())
-                }
             }
 
             config_path.write_text(json_module.dumps(existing_config, indent=2))
@@ -995,12 +990,17 @@ def _install_opencode_mcp_config(workspace_dir: Path, tracker: StepTracker) -> b
             config_path.rename(config_path.with_suffix(".json.bak"))
             tracker.add_warning("Backed up invalid opencode.json")
 
-    # Create new config from template
-    template_content = template_path.read_text()
-    config_content = template_content.replace(
-        "{{WORKSPACE_PATH}}", str(workspace_dir.absolute())
-    )
+    # Create new config without WORKSPACE_PATH
+    new_config = {
+        "mcp": {
+            "cortext": {
+                "type": "local",
+                "command": ["cortext-mcp"],
+                "enabled": True,
+            }
+        }
+    }
 
-    config_path.write_text(config_content)
+    config_path.write_text(json_module.dumps(new_config, indent=2))
     tracker.add_step("Created opencode.json with MCP config")
     return True

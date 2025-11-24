@@ -137,6 +137,10 @@ class CortextMCPServer:
                             "description": "Maximum number of results to return",
                             "default": 10,
                         },
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Workspace root path (defaults to current directory)",
+                        },
                     },
                     "required": ["query"],
                 },
@@ -156,6 +160,10 @@ class CortextMCPServer:
                             "description": "Maximum number of relevant conversations to return",
                             "default": 5,
                         },
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Workspace root path (defaults to current directory)",
+                        },
                     },
                     "required": ["topic"],
                 },
@@ -169,6 +177,10 @@ class CortextMCPServer:
                         "topic": {
                             "type": "string",
                             "description": "Topic or decision area to search for",
+                        },
+                        "workspace_path": {
+                            "type": "string",
+                            "description": "Workspace root path (defaults to current directory)",
                         },
                     },
                     "required": ["topic"],
@@ -341,20 +353,38 @@ class CortextMCPServer:
         type: str = "all",
         date_range: str = None,
         limit: int = 10,
+        workspace_path: str = None,
     ) -> dict[str, Any]:
         """Search across workspace using ripgrep."""
+        # Use provided workspace_path or fall back to server default
+        ws_path = Path(workspace_path) if workspace_path else self.workspace_path
+
+        # Load conversation types for this workspace
+        registry_path = ws_path / ".workspace" / "registry.json"
+        if registry_path.exists():
+            try:
+                with open(registry_path) as f:
+                    registry = json.load(f)
+                conv_types = {}
+                for type_name, type_config in registry.get("conversation_types", {}).items():
+                    conv_types[type_name] = type_config.get("folder", type_name)
+            except Exception:
+                conv_types = self.conversation_types
+        else:
+            conv_types = self.conversation_types
+
         # Check if any conversation type folders exist
         search_paths = []
         if type == "all":
             # Search all known type folders
-            for type_name, folder in self.conversation_types.items():
-                folder_path = self.workspace_path / folder
+            for type_name, folder in conv_types.items():
+                folder_path = ws_path / folder
                 if folder_path.exists():
                     search_paths.append(str(folder_path))
         else:
             # Search specific type folder
-            folder = self.conversation_types.get(type, type)
-            folder_path = self.workspace_path / folder
+            folder = conv_types.get(type, type)
+            folder_path = ws_path / folder
             if folder_path.exists():
                 search_paths.append(str(folder_path))
 
@@ -408,7 +438,7 @@ class CortextMCPServer:
                         conv_name = "unknown"
                         # Look for conversation type folder at workspace root
                         for i, part in enumerate(path_parts):
-                            if part in self.conversation_types.values():
+                            if part in conv_types.values():
                                 # Found type folder, conversation name is at i+2
                                 # {type}/YYYY-MM-DD/###-name/
                                 if i + 2 < len(path_parts):
@@ -469,10 +499,10 @@ class CortextMCPServer:
         except Exception as e:
             return {"content": [{"type": "text", "text": f"Search error: {str(e)}"}]}
 
-    def get_context(self, topic: str, max_results: int = 5) -> dict[str, Any]:
+    def get_context(self, topic: str, max_results: int = 5, workspace_path: str = None) -> dict[str, Any]:
         """Get relevant context for a topic."""
         # Use search_workspace to find relevant conversations
-        search_result = self.search_workspace(topic, limit=max_results)
+        search_result = self.search_workspace(topic, limit=max_results, workspace_path=workspace_path)
 
         # Enhance with context info
         result_text = f"# Context for: {topic}\n\n"
@@ -481,10 +511,13 @@ class CortextMCPServer:
 
         return {"content": [{"type": "text", "text": result_text}]}
 
-    def get_decision_history(self, topic: str) -> dict[str, Any]:
+    def get_decision_history(self, topic: str, workspace_path: str = None) -> dict[str, Any]:
         """Retrieve past decisions on a topic."""
+        # Use provided workspace_path or fall back to server default
+        ws_path = Path(workspace_path) if workspace_path else self.workspace_path
+
         # Search in decisions.md file
-        decisions_file = self.workspace_path / ".workspace" / "memory" / "decisions.md"
+        decisions_file = ws_path / ".workspace" / "memory" / "decisions.md"
 
         if not decisions_file.exists():
             return {
@@ -515,16 +548,9 @@ class CortextMCPServer:
 
 def main():
     """Main entry point for the MCP server."""
-    import os
-
-    # Get workspace path from environment variable or use current directory
-    workspace_path = os.environ.get("WORKSPACE_PATH")
-    if workspace_path:
-        workspace_path = Path(workspace_path)
-    else:
-        workspace_path = Path.cwd()
-
-    server = CortextMCPServer(workspace_path)
+    # Server uses current working directory as default workspace
+    # Individual tool calls can override with workspace_path parameter
+    server = CortextMCPServer(Path.cwd())
 
     # Read from stdin and write to stdout (MCP protocol)
     for line in sys.stdin:
