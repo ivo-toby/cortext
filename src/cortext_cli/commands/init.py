@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 from datetime import datetime
+from importlib.metadata import version as get_package_version
 from pathlib import Path
 from typing import Optional
 
@@ -21,12 +22,25 @@ from cortext_cli.converters import (
 from cortext_cli.utils import (
     AGENT_CONFIG,
     StepTracker,
+    compute_file_hash,
     get_commands_dir,
     get_git_hooks_dir,
     get_hooks_dir,
     get_scripts_dir,
     get_template_dir,
 )
+
+
+def get_cortext_version() -> str:
+    """Get the current installed Cortext version."""
+    try:
+        return get_package_version("cortext-workspace")
+    except Exception:
+        return "0.0.0"
+
+
+# Current script API version for generated scripts
+SCRIPT_API_VERSION = "1.0"
 
 console = Console()
 
@@ -443,13 +457,73 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
         tracker.add_info("AI tool directories created")
 
 
+def compute_generated_files_metadata(workspace_dir: Path, type_id: str, type_config: dict) -> dict:
+    """Compute generation metadata for a conversation type's files.
+
+    Args:
+        workspace_dir: Workspace root directory
+        type_id: Type identifier (e.g., 'brainstorm')
+        type_config: Type configuration dict with paths
+
+    Returns:
+        Dict with generated_with metadata including file hashes
+    """
+    files_metadata = {}
+
+    # Hash script file if it exists
+    script_path = workspace_dir / type_config.get("script", "")
+    if script_path.exists():
+        files_metadata["script"] = {
+            "path": type_config.get("script"),
+            "original_hash": compute_file_hash(script_path)
+        }
+
+    # Hash template file if it exists
+    template_path = workspace_dir / type_config.get("template", "")
+    if template_path.exists():
+        files_metadata["template"] = {
+            "path": type_config.get("template"),
+            "original_hash": compute_file_hash(template_path)
+        }
+
+    # Hash Claude command file if it exists
+    command_name = type_config.get("command", "").lstrip("/").replace(".", "_")
+    claude_cmd_path = workspace_dir / ".claude" / "commands" / f"{command_name}.md"
+    if claude_cmd_path.exists():
+        files_metadata["command_claude"] = {
+            "path": f".claude/commands/{command_name}.md",
+            "original_hash": compute_file_hash(claude_cmd_path)
+        }
+
+    # Hash Gemini command file if it exists
+    gemini_cmd_path = workspace_dir / ".gemini" / "commands" / f"{command_name}.toml"
+    if gemini_cmd_path.exists():
+        files_metadata["command_gemini"] = {
+            "path": f".gemini/commands/{command_name}.toml",
+            "original_hash": compute_file_hash(gemini_cmd_path)
+        }
+
+    return {
+        "cortext_version": get_cortext_version(),
+        "script_api_version": SCRIPT_API_VERSION,
+        "files": files_metadata
+    }
+
+
 def create_registry(workspace_dir: Path, tracker: StepTracker):
     """Create the initial conversation type registry."""
     registry_path = workspace_dir / ".workspace" / "registry.json"
 
+    current_version = get_cortext_version()
+    current_time = datetime.utcnow().isoformat() + "Z"
+
     registry = {
-        "version": "1.0",
-        "created": datetime.now().isoformat(),
+        "schema_version": "2.0",
+        "workspace_meta": {
+            "cortext_version": current_version,
+            "initialized": current_time,
+            "last_upgraded": None,
+        },
         "conversation_types": {
             "brainstorm": {
                 "name": "Brainstorm",
@@ -538,6 +612,15 @@ def create_registry(workspace_dir: Path, tracker: StepTracker):
         },
         "statistics": {"total_conversations": 0, "by_type": {}},
     }
+
+    # Add generated_with metadata to each conversation type
+    for type_id, type_config in registry["conversation_types"].items():
+        try:
+            generated_metadata = compute_generated_files_metadata(workspace_dir, type_id, type_config)
+            type_config["generated_with"] = generated_metadata
+        except Exception as e:
+            # If hash computation fails, continue without it
+            tracker.add_warning(f"Could not compute hashes for {type_id}: {e}")
 
     registry_path.write_text(json.dumps(registry, indent=2))
     tracker.add_step("Created conversation type registry")

@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Workspace Upgrade System
+
+Cortext now supports safe, incremental workspace upgrades that preserve user customizations while updating built-in files to newer versions.
+
+**Key Features:**
+- **Hash-based tracking**: SHA-256 hashes detect file modifications
+- **Smart prompts**: Only prompts for files you've actually changed
+- **Automatic backups**: Timestamped backups before any overwrite
+- **Legacy support**: Graceful migration for pre-v0.3.0 workspaces
+- **Multiple upgrade options**: Overwrite, keep, diff, or create .new files
+
+**New Command:**
+```bash
+cortext upgrade                    # Interactive upgrade
+cortext upgrade --yes              # Auto-accept defaults
+cortext upgrade --dry-run          # Preview changes
+cortext upgrade --regenerate TYPE  # Force regenerate specific type
+cortext upgrade --built-in-only    # Skip custom types
+```
+
+**Registry Schema v2.0:**
+- Added `workspace_meta` with version tracking
+- Added `generated_with` metadata to conversation types
+- Tracks original file hashes for upgrade detection
+
+**What this means for you:**
+- New workspaces: Created with v2.0 schema automatically
+- Existing workspaces: Run `cortext upgrade` to migrate
+- Custom types: Will be tracked for safe future upgrades
+
 ### Changed
 
 #### **BREAKING**: MCP Server Workspace Scope

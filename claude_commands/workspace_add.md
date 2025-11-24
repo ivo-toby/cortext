@@ -257,9 +257,34 @@ Add the new type to `.workspace/registry.json`:
   "created": "{current_date}",
   "created_by": "user",
   "description": "{description}",
-  "sections": [{sections}]
+  "sections": [{sections}],
+  "session_support": true,
+  "generated_with": {
+    "cortext_version": "{get from workspace_meta.cortext_version}",
+    "script_api_version": "1.0",
+    "files": {
+      "script": {
+        "path": ".workspace/scripts/bash/{type_name}.sh",
+        "original_hash": "{compute SHA-256 hash of script file}"
+      },
+      "template": {
+        "path": ".workspace/templates/{type_name}.md",
+        "original_hash": "{compute SHA-256 hash of template file}"
+      },
+      "command_claude": {
+        "path": ".claude/commands/workspace_{type_name}.md",
+        "original_hash": "{compute SHA-256 hash of command file}"
+      }
+    }
+  }
 }
 ```
+
+**Important Notes on Hash Computation:**
+- After creating all files, compute SHA-256 hashes for each
+- Use Python's hashlib: `hashlib.sha256(content.encode()).hexdigest()`
+- Format as: `"sha256:{hex_digest}"`
+- This enables the upgrade system to detect future modifications
 
 **Important**: Also create the type folder at workspace root:
 ```bash

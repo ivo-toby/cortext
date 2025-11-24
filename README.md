@@ -16,6 +16,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 - **🔍 RAG Search** - Semantic search across all conversations using local embeddings
 - **🎯 Workflow Automation** - Bash scripts and slash commands for repeatable processes
 - **🪝 Event Hooks** - Extensible automation triggered on workspace events
+- **🔧 Safe Upgrades** - Hash-based tracking with smart prompts preserves customizations
 
 ---
 
@@ -92,6 +93,10 @@ cortext resume --list              # List all resumable conversations
 cortext resume --list --type brainstorm  # Filter by type
 cortext resume "api design"        # Resume by search term
 cortext resume 001-brainstorm-api  # Resume by ID
+
+cortext upgrade                    # Upgrade workspace to current version
+cortext upgrade --dry-run          # Preview upgrade changes
+cortext upgrade --yes              # Auto-accept all upgrades
 ```
 
 ### MCP Server (AI Agent Integration)
@@ -211,6 +216,43 @@ Conversations can be paused and resumed with full context preservation:
 3. Continues naturally from where you stopped
 
 See **[Session Guide](Docs/session-guide.md)** for complete documentation.
+
+### Workspace Upgrades
+
+Cortext supports safe, incremental workspace upgrades that preserve your customizations:
+
+```bash
+# Check if upgrade is available
+cortext upgrade
+
+# Preview what would change
+cortext upgrade --dry-run
+
+# Upgrade non-interactively
+cortext upgrade --yes
+
+# Force regenerate a specific type
+cortext upgrade --regenerate my-custom-type
+
+# Only upgrade built-in types
+cortext upgrade --built-in-only
+```
+
+**How it works:**
+- New workspaces track file hashes automatically
+- Upgrades detect if you've modified files
+- Unmodified files upgrade silently
+- Modified files prompt for action (overwrite, keep, diff, create .new)
+- All overwrites create timestamped backups
+
+**Upgrade options for modified files:**
+1. **Overwrite** - Backup to `.workspace/backup/` and update
+2. **Keep** - Leave your version unchanged
+3. **Create .new** - Generate `.new` files for manual merge
+4. **Show diff** - View what changed
+5. **Skip** - Don't upgrade this file
+
+See **[Upgrade Guide](Docs/upgrade-guide.md)** for complete documentation and **[CHANGELOG.md](CHANGELOG.md)** for version history.
 
 ### Git Workflow
 

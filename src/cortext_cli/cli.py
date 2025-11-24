@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from cortext_cli.commands import check, init, list, embed, search, rag, mcp, hooks, resume
+from cortext_cli.commands import check, init, list, embed, search, rag, mcp, hooks, resume, upgrade
 
 console = Console()
 
@@ -53,6 +53,7 @@ def callback(
                 "AI-augmented workspace for knowledge work\n\n"
                 "[dim]Commands:[/dim]\n"
                 "  [green]cortext init[/green]        Initialize a new workspace\n"
+                "  [green]cortext upgrade[/green]     Upgrade workspace to current version\n"
                 "  [green]cortext check[/green]       Check required tools\n"
                 "  [green]cortext list[/green]        List conversation types\n"
                 "  [green]cortext resume[/green]      Resume paused conversations\n"
@@ -69,6 +70,7 @@ def callback(
 
 app.command()(check.check)
 app.command()(init.init)
+app.command(name="upgrade")(upgrade.upgrade_command)
 app.command(name="list")(list.list_types)
 app.command(name="resume")(resume.resume_command)
 app.command(name="embed")(embed.embed_command)
