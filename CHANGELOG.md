@@ -258,7 +258,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated all references from `YYYY-MM` to `YYYY-MM-DD` format
   - `openspec/project.md`, `templates/cursorrules`, `Docs/spec.md`, `Docs/mcp-server.md`
 
-## [0.1.0] - 2025-11-10
+%b## [0.1.0] - 2025-11-10
 
 ### Added
 
@@ -367,4 +367,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [User Guide](Docs/user-guide.md)
 - [MCP Server Guide](Docs/mcp-server.md)
 - [Multi-AI Support](Docs/multi-ai-support.md)
+%b
 %b
