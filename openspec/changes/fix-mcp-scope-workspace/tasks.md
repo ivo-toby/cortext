@@ -27,11 +27,13 @@
 - [x] 3.1 Test MCP tools work without workspace_path (uses cwd)
 - [x] 3.2 Test MCP tools work with explicit workspace_path
 - [x] 3.3 Test `cortext init` creates registration without WORKSPACE_PATH
-- [ ] 3.4 Test switching between workspaces works correctly
-- [ ] 3.5 Test RAG tools still work with their existing workspace_path parameter
+- [ ] 3.4 Test switching between workspaces works correctly (manual testing)
+- [ ] 3.5 Test RAG tools still work with their existing workspace_path parameter (manual testing)
 
 ## 4. Documentation
 
-- [ ] 4.1 Update MCP server documentation to reflect new tool signatures
-- [ ] 4.2 Remove references to WORKSPACE_PATH environment variable
-- [ ] 4.3 Update any examples showing MCP registration with env vars
+- [x] 4.1 Update MCP server documentation to reflect new tool signatures
+- [x] 4.2 Remove references to WORKSPACE_PATH environment variable
+- [x] 4.3 Update any examples showing MCP registration with env vars
+- [x] 4.4 Add upgrade path documentation to CHANGELOG.md
+- [x] 4.5 Add "Upgrading from Previous Versions" section to mcp-server.md

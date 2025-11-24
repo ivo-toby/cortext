@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### **BREAKING**: MCP Server Workspace Scope
+
+MCP tools now accept an explicit `workspace_path` parameter instead of relying on the `WORKSPACE_PATH` environment variable. This fixes the issue where MCP tools would search in the wrong workspace after switching between Cortext workspaces.
+
+**What changed:**
+- All MCP tools (`search_workspace`, `get_context`, `get_decision_history`) now accept optional `workspace_path` parameter
+- MCP registration no longer includes `WORKSPACE_PATH` environment variable
+- Server defaults to current working directory when `workspace_path` not provided
+- AI agents should pass the current workspace path when calling tools
+
+**New registration format:**
+```bash
+# Old (deprecated)
+claude mcp add --transport stdio --scope local cortext --env WORKSPACE_PATH=/path -- cortext-mcp
+
+# New
+claude mcp add --transport stdio --scope local cortext -- cortext-mcp
+```
+
+**New tool call format:**
+```python
+# AI passes workspace explicitly
+search_workspace(query="...", workspace_path="/path/to/workspace")
+
+# Or relies on cwd fallback
+search_workspace(query="...")
+```
+
+#### Upgrade Path
+
+**Existing users - no action required in most cases:**
+1. Old registrations with `WORKSPACE_PATH` continue to work
+2. The env var is ignored; server uses current working directory
+3. When Claude Code spawns MCP from your project, cwd is correct
+
+**For cleanest setup (recommended for multi-workspace users):**
+```bash
+# Remove old registration
+claude mcp remove cortext
+
+# Re-register without WORKSPACE_PATH
+cortext init
+# or manually: claude mcp add --transport stdio --scope local cortext -- cortext-mcp
+```
+
+**Gemini/OpenCode users:**
+- Run `cortext mcp install --force` to update configuration
+- Or manually remove `env`/`environment` sections from config files
+
 ### Added
 
 #### RAG Tools in MCP Server
