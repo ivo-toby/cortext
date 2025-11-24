@@ -1,11 +1,8 @@
 # git-workflow Specification
 
 ## Purpose
-
-Defines the git workflow for conversation management in Cortext workspaces, using a main-only branch approach with optional tagging for conversation boundaries.
-
-## ADDED Requirements
-
+TBD - created by archiving change simplify-git-workflow. Update Purpose after archive.
+## Requirements
 ### Requirement: Conversation scripts SHALL commit directly to main branch
 
 All conversation initialization scripts MUST commit directly to the main branch instead of creating separate conversation branches.
@@ -107,13 +104,11 @@ git checkout -b experiment/risky-idea
 
 ---
 
-## MODIFIED Requirements
-
 ### Requirement: Commit session script SHALL work on any branch
 
-The commit-session.sh script MUST commit conversation changes regardless of which branch is active, not only on conversation branches.
+The commit-session.sh script MUST commit conversation changes regardless of which branch is active.
 
-**ID:** `GIT-004` | **Priority:** High | **Modifies:** Previous branch-specific behavior
+**ID:** `GIT-004` | **Priority:** High
 
 #### Scenario: Committing session on main branch
 
@@ -142,20 +137,3 @@ git status
 
 ---
 
-## REMOVED Requirements
-
-### Requirement: Conversation scripts SHALL NOT create conversation branches
-
-**ID:** `GIT-R001` | **Removes:** Previous branch-per-conversation behavior
-
-The behavior of creating a `conversation/{ID}` branch for each new conversation is removed. This eliminates:
-- Automatic branch creation on conversation initialization
-- Branch-based conversation isolation
-- Need for merge strategies or branch cleanup
-
-**Rationale:**
-- Prevents unbounded branch growth
-- Simplifies mental model for single-user workspaces
-- Users can still create manual branches when needed
-
----

@@ -1,17 +1,8 @@
-# Spec: MCP Agent Registration
+# mcp-agent-registration Specification
 
-**Capability**: mcp-agent-registration
-**Related To**: cli-init, mcp-server
-**Status**: Proposed
-
-## Overview
-
-Automatically configure MCP server registration for supported AI agents during workspace initialization, eliminating manual setup and ensuring agents can access MCP tools immediately.
-
----
-
-## ADDED Requirements
-
+## Purpose
+TBD - created by archiving change integrate-rag-mcp. Update Purpose after archive.
+## Requirements
 ### Requirement: User Controls MCP Configuration via Flags
 
 The `cortext init` command SHALL support `--mcp` and `--no-mcp` flags to control MCP server configuration.
@@ -244,72 +235,3 @@ AND links to documentation for testing MCP tools
 
 ---
 
-## MODIFIED Requirements
-
-### Requirement: Init Creates Agent-Specific Directories
-
-The init command SHALL create agent-specific directories containing both slash commands AND MCP configuration files.
-
-#### Scenario: Claude Directory Contains Both Commands and MCP Config
-
-```
-GIVEN a user runs `cortext init --ai claude`
-WHEN the initialization completes
-THEN `.claude/` contains:
-  - `commands/` directory with slash commands
-  - `mcp_config.json` with MCP server registration
-```
-
----
-
-## Implementation Notes
-
-### Agent Config Paths
-
-| Agent | MCP Config Location | Notes |
-|-------|-------------------|-------|
-| Claude Code | `<workspace>/.claude/mcp_config.json` | Workspace-local, Claude auto-discovers |
-| Gemini CLI | `<workspace>/.gemini/mcp_config.json` | Format TBD - needs research |
-| OpenCode | `<workspace>/.opencode/mcp_config.json` | May integrate with AGENT_CONFIG.toml |
-| Cursor | N/A | Cursor doesn't support MCP protocol |
-
-### Config Template
-
-Store template at `templates/mcp_config.json`:
-```json
-{
-  "mcpServers": {
-    "cortext": {
-      "command": "cortext-mcp",
-      "args": [],
-      "env": {
-        "WORKSPACE_PATH": "{{WORKSPACE_PATH}}"
-      }
-    }
-  }
-}
-```
-
-Replace `{{WORKSPACE_PATH}}` during init.
-
-### Implementation Steps
-
-1. Add `install_mcp_config()` function to `init.py`
-2. Call after `configure_ai_tools()`
-3. Check if `cortext-mcp` is in PATH
-4. For each agent, copy and populate template
-5. Log success/warnings
-
-### Testing
-
-Required tests:
-- Unit: Test `install_mcp_config()` creates correct files
-- Integration: Run `cortext init`, verify configs exist
-- E2E: Start Claude with generated config, verify MCP works
-
-### Backward Compatibility
-
-Existing workspaces:
-- Users can re-run `cortext init` to add MCP config
-- Existing configs are not overwritten
-- No data migration needed
