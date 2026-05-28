@@ -177,6 +177,27 @@ How should existing files be treated? [modified/unmodified/cancel] (modified):
 
 ## Advanced Usage
 
+### Add a New AI Tool to an Existing Workspace
+
+Add support for a new AI tool without re-running `cortext init` (which would re-copy all files):
+
+```bash
+# Add Codex CLI support
+cortext upgrade --add-tool codex
+
+# Then configure MCP for the new tool
+cortext mcp install --ai codex
+```
+
+This non-destructively:
+- Creates the tool's command directory (e.g. `.codex/prompts/`)
+- Converts and installs all built-in commands in the tool's format
+- Also installs prompts to the user home (e.g. `~/.codex/prompts/` for Codex)
+- Reads your `registry.json` and syncs every custom type you've created
+- Creates any required config files (`AGENTS.md`, etc.)
+
+Supported tools: `claude`, `codex`, `opencode`, `gemini`, `cursor`
+
 ### Force Regenerate Specific Type
 
 ```bash

@@ -115,6 +115,25 @@ claude
 
 ## 📖 Usage
 
+### With Codex CLI
+
+Initialize with Codex support:
+```bash
+cortext init --ai=codex
+# or add to an existing workspace:
+cortext upgrade --add-tool codex && cortext mcp install --ai codex
+```
+
+Codex automatically reads `AGENTS.md` at the workspace root for context. Slash commands are available via `/`:
+```
+/workspace_brainstorm      Start an ideation session
+/workspace_debug           Debug a problem systematically
+/workspace_plan            Plan a feature or project
+/workspace_learn           Document learning and take notes
+/workspace_meeting         Capture meeting notes and actions
+/workspace_review          Conduct code or design reviews
+```
+
 ### With Claude Code
 
 Once your workspace is initialized, Claude Code will have access to conversation commands:
