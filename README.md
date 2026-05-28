@@ -10,7 +10,7 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 
 - **📝 Structured Conversations** - Templates for brainstorming, debugging, planning, learning, meetings, reviews, and project management
 - **🔄 Git-Based** - Every conversation and decision tracked in version control
-- **🤖 Multi-AI Support** - Works with Claude Code, OpenCode, Gemini CLI, Cursor, and more
+- **🤖 Multi-AI Support** - Works with Claude Code, Codex CLI, OpenCode, Gemini CLI, Cursor, and more
 - **🧠 Persistent Memory** - Personal constitution defines your working style across all tools
 - **⏸️ Session Resumption** - Pause and resume conversations with full context preserved
 - **🔍 RAG Search** - Semantic search across all conversations using local embeddings
@@ -114,6 +114,25 @@ claude
 ---
 
 ## 📖 Usage
+
+### With Codex CLI
+
+Initialize with Codex support:
+```bash
+cortext init --ai=codex
+# or add to an existing workspace:
+cortext upgrade --add-tool codex && cortext mcp install --ai codex
+```
+
+Codex automatically reads `AGENTS.md` at the workspace root for context. Slash commands are available via `/`:
+```
+/workspace_brainstorm      Start an ideation session
+/workspace_debug           Debug a problem systematically
+/workspace_plan            Plan a feature or project
+/workspace_learn           Document learning and take notes
+/workspace_meeting         Capture meeting notes and actions
+/workspace_review          Conduct code or design reviews
+```
 
 ### With Claude Code
 
@@ -280,6 +299,9 @@ cortext upgrade --regenerate my-custom-type
 
 # Only upgrade built-in types
 cortext upgrade --built-in-only
+
+# Add a new AI tool to an existing workspace
+cortext upgrade --add-tool codex
 ```
 
 **How it works:**
@@ -323,8 +345,8 @@ Semantic search across your workspace using local embeddings (optional feature).
 
 **Installation:**
 ```bash
-pip install -e '.[rag]'  # For development
-# Or: pip install 'cortext-workspace[rag]'
+uv tool install "git+https://github.com/ivo-toby/cortext.git[rag]"  # recommended
+pip install -e '.[rag]'  # for development
 ```
 
 **Usage:**
