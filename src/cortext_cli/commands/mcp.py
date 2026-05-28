@@ -17,7 +17,7 @@ app = typer.Typer(help="MCP server management commands")
 @app.command("install")
 def mcp_install(
     ai: Optional[str] = typer.Option(
-        None, help="Configure for specific agent (claude, gemini, opencode, all)"
+        None, help="Configure for specific agent (claude, gemini, opencode, codex, all)"
     ),
     force: bool = typer.Option(False, help="Overwrite existing configs"),
 ):
@@ -126,17 +126,14 @@ def _detect_configured_agents(workspace_dir: Path) -> list[str]:
     """Detect which agents are configured in the workspace."""
     agents = []
 
-    # Check for Claude
     if (workspace_dir / ".claude" / "commands").exists():
         agents.append("claude")
-
-    # Check for Gemini
     if (workspace_dir / ".gemini" / "commands").exists():
         agents.append("gemini")
-
-    # Check for OpenCode
     if (workspace_dir / ".opencode" / "command").exists():
         agents.append("opencode")
+    if (workspace_dir / ".codex" / "prompts").exists():
+        agents.append("codex")
 
     return agents
 
@@ -155,7 +152,6 @@ def _check_mcp_command() -> bool:
 def _check_mcp_config_exists(workspace_dir: Path, agent: str) -> bool:
     """Check if MCP config already exists for an agent."""
     if agent == "claude":
-        # Check if server is registered with Claude CLI
         try:
             result = subprocess.run(
                 ["claude", "mcp", "get", "cortext"],
@@ -165,6 +161,20 @@ def _check_mcp_config_exists(workspace_dir: Path, agent: str) -> bool:
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
+    elif agent == "codex":
+        import tomllib
+        for config_path in [
+            workspace_dir / ".codex" / "config.toml",
+            Path.home() / ".codex" / "config.toml",
+        ]:
+            if config_path.exists():
+                try:
+                    config = tomllib.loads(config_path.read_text())
+                    if "cortext" in config.get("mcp_servers", {}):
+                        return True
+                except Exception:
+                    pass
+        return False
     else:
         config_path = _get_config_path(workspace_dir, agent)
         return config_path.exists() if config_path else False
@@ -173,12 +183,13 @@ def _check_mcp_config_exists(workspace_dir: Path, agent: str) -> bool:
 def _get_config_path(workspace_dir: Path, agent: str) -> Optional[Path]:
     """Get the config path for a specific agent."""
     if agent == "claude":
-        # Claude uses CLI registration, not config file
-        return None
+        return None  # Uses CLI registration
     elif agent == "gemini":
         return Path.home() / ".gemini" / "settings.json"
     elif agent == "opencode":
         return workspace_dir / "opencode.json"
+    elif agent == "codex":
+        return workspace_dir / ".codex" / "config.toml"
     return None
 
 
@@ -190,6 +201,8 @@ def _install_mcp_config_for_agent(workspace_dir: Path, agent: str) -> bool:
         return _install_gemini_mcp_config(workspace_dir)
     elif agent == "opencode":
         return _install_opencode_mcp_config(workspace_dir)
+    elif agent == "codex":
+        return _install_codex_mcp_config(workspace_dir)
     return False
 
 
@@ -304,4 +317,30 @@ def _install_opencode_mcp_config(workspace_dir: Path) -> bool:
     }
 
     config_path.write_text(json.dumps(new_config, indent=2))
+    return True
+
+
+def _install_codex_mcp_config(workspace_dir: Path) -> bool:
+    """Install MCP config for Codex CLI (.codex/config.toml, keyed-table syntax)."""
+    import tomllib
+
+    codex_dir = workspace_dir / ".codex"
+    codex_dir.mkdir(parents=True, exist_ok=True)
+    config_path = codex_dir / "config.toml"
+
+    new_block = '\n[mcp_servers.cortext]\ncommand = "cortext-mcp"\n'
+
+    if config_path.exists():
+        try:
+            existing = tomllib.loads(config_path.read_text())
+            if "cortext" in existing.get("mcp_servers", {}):
+                return True  # Already present
+        except Exception:
+            pass
+        config_path.write_text(config_path.read_text().rstrip() + new_block)
+    else:
+        config_path.write_text(
+            "# Codex CLI configuration for Cortext workspace\n" + new_block
+        )
+
     return True

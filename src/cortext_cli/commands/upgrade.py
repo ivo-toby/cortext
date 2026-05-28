@@ -18,6 +18,7 @@ from rich.syntax import Syntax
 from cortext_cli.commands.init import (
     SCRIPT_API_VERSION,
     compute_generated_files_metadata,
+    configure_ai_tools,
     get_builtin_conversation_types,
 )
 from cortext_cli.converters import (
@@ -136,6 +137,89 @@ def show_diff(original_content: str, current_content: str, file_path: str):
         console.print("[dim]No differences found[/dim]")
 
 
+def _add_tool_to_workspace(workspace_dir: Path, tool: str, verbose: bool):
+    """Wire up a new AI tool on an existing workspace non-destructively.
+
+    Creates the tool's command directory (e.g. .codex/prompts/), converts
+    and installs all built-in commands plus custom types from the registry,
+    and writes AGENTS.md / config files as appropriate.
+    """
+    supported = {"claude", "codex", "opencode", "gemini", "cursor"}
+    if tool not in supported:
+        console.print(f"[red]✗[/red] Unknown tool '{tool}'. Supported: {', '.join(sorted(supported))}")
+        raise typer.Exit(1)
+
+    tracker = StepTracker(f"Adding {tool.title()} support")
+
+    # Configure built-in AI tool files (commands, AGENTS.md, etc.)
+    configure_ai_tools(workspace_dir, tool, tracker)
+
+    # Also sync custom conversation types from registry
+    registry_path = workspace_dir / ".workspace" / "registry.json"
+    if registry_path.exists():
+        try:
+            registry = json.loads(registry_path.read_text())
+            custom_types = {
+                tid: cfg
+                for tid, cfg in registry.get("conversation_types", {}).items()
+                if not cfg.get("built_in", True)
+            }
+            if custom_types:
+                _sync_custom_types_to_tool(workspace_dir, tool, custom_types, verbose)
+                tracker.add_step(f"Synced {len(custom_types)} custom type(s) to {tool}")
+        except Exception as e:
+            tracker.add_warning(f"Could not sync custom types: {e}")
+
+    tracker.print_summary()
+    console.print(
+        f"\n[green]✓[/green] {tool.title()} support added.\n"
+        f"[dim]Run 'cortext mcp install --ai {tool}' to also configure the MCP server.[/dim]"
+    )
+
+
+def _sync_custom_types_to_tool(
+    workspace_dir: Path, tool: str, custom_types: dict, verbose: bool
+):
+    """Copy/convert custom type command files into the new tool's directory."""
+    from cortext_cli.converters import convert_md_for_codex, convert_md_to_toml
+
+    for type_id, type_config in custom_types.items():
+        command_name = type_config.get("command", "").lstrip("/").replace(".", "_")
+        if not command_name:
+            continue
+
+        # Source: Claude command (always present for user-created types)
+        claude_src = workspace_dir / ".claude" / "commands" / f"{command_name}.md"
+        if not claude_src.exists():
+            continue
+
+        try:
+            if tool == "codex":
+                codex_dir = workspace_dir / ".codex" / "prompts"
+                if codex_dir.exists():
+                    content, _ = convert_md_for_codex(claude_src)
+                    (codex_dir / f"{command_name}.md").write_text(content)
+                    user_dir = Path.home() / ".codex" / "prompts"
+                    user_dir.mkdir(parents=True, exist_ok=True)
+                    (user_dir / f"{command_name}.md").write_text(content)
+            elif tool == "opencode":
+                opencode_dir = workspace_dir / ".opencode" / "command"
+                if opencode_dir.exists():
+                    import shutil as _shutil
+                    _shutil.copy2(claude_src, opencode_dir / f"{command_name}.md")
+            elif tool == "gemini":
+                gemini_dir = workspace_dir / ".gemini" / "commands"
+                if gemini_dir.exists():
+                    content, _ = convert_md_to_toml(claude_src)
+                    (gemini_dir / f"{command_name}.toml").write_text(content)
+            elif tool == "claude":
+                pass  # already the source
+            if verbose:
+                console.print(f"[green]✓[/green] Synced custom type '{type_id}' for {tool}")
+        except Exception as e:
+            console.print(f"[yellow]⚠[/yellow] Could not sync '{type_id}' for {tool}: {e}")
+
+
 def upgrade_command(
     workspace_path: Optional[Path] = typer.Option(
         None,
@@ -175,8 +259,18 @@ def upgrade_command(
         "-v",
         help="Show detailed progress",
     ),
+    add_tool: Optional[str] = typer.Option(
+        None,
+        "--add-tool",
+        help="Add support for a new AI tool without re-initializing (e.g. codex, opencode, gemini)",
+    ),
 ):
-    """Upgrade workspace to current Cortext version."""
+    """Upgrade workspace to current Cortext version.
+
+    To add a new AI tool to an existing workspace without re-initializing:
+
+        cortext upgrade --add-tool codex
+    """
 
     # Determine workspace directory
     if workspace_path is None:
@@ -189,6 +283,11 @@ def upgrade_command(
         console.print("[red]✗[/red] Not a Cortext workspace")
         console.print(f"[dim]Directory: {workspace_dir}[/dim]")
         raise typer.Exit(1)
+
+    # --add-tool: non-destructively wire up a new AI tool on an existing workspace
+    if add_tool:
+        _add_tool_to_workspace(workspace_dir, add_tool, verbose)
+        return
 
     # Check workspace version status
     status, workspace_version = check_workspace_version(workspace_dir)
