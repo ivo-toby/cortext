@@ -63,7 +63,46 @@ cortext init --ai=all
 **Usage**:
 OpenCode will read the workspace configuration and provide assistance based on your constitution.
 
-### 4. Gemini CLI ✅ Basic Support
+### 4. Codex CLI ✅ Full Support
+
+**Configuration**: `.codex/prompts/` (workspace reference) + `~/.codex/prompts/` (active)
+
+Cortext converts commands to Codex prompt format and writes an `AGENTS.md` at the workspace root that Codex reads automatically for context.
+
+**Setup (new workspace)**:
+```bash
+cortext init --ai=codex
+# or
+cortext init --ai=all
+```
+
+**Setup (existing workspace)**:
+```bash
+cortext upgrade --add-tool codex
+cortext mcp install --ai codex
+```
+
+**Available Commands** (via `/` in Codex):
+- `/workspace_brainstorm` - Start brainstorming
+- `/workspace_debug` - Debug systematically
+- `/workspace_plan` - Plan features
+- `/workspace_learn` - Document learning
+- `/workspace_meeting` - Capture meetings
+- `/workspace_review` - Conduct reviews
+- `/workspace_add` - Create custom types
+
+**MCP Server**: Configured via `.codex/config.toml`:
+```toml
+[mcp_servers.cortext]
+command = "cortext-mcp"
+```
+
+**Notes**:
+- Prompts are installed to `~/.codex/prompts/` (the path Codex scans) and also kept in `.codex/prompts/` for version control
+- `AGENTS.md` at workspace root is read by Codex automatically — no slash command needed for context
+- Custom types created with `/workspace.add` are also available as `/workspace_{type}` in Codex
+
+### 5. Gemini CLI ✅ Basic Support
 
 **Configuration**: `.gemini/commands/` (TOML format)
 
@@ -97,6 +136,7 @@ This creates:
 - `.claude/commands/` - Claude Code
 - `.cursorrules` - Cursor
 - `.opencode/` - OpenCode
+- `.codex/prompts/` + `~/.codex/prompts/` + `AGENTS.md` - Codex CLI
 - `.gemini/commands/` - Gemini CLI
 
 ## Constitution: The Key to Consistency
@@ -121,6 +161,10 @@ The workspace is tool-agnostic:
 cd ~/my-workspace
 claude
 
+# Use with Codex CLI
+cd ~/my-workspace
+codex
+
 # Use with Cursor
 cursor ~/my-workspace
 
@@ -142,10 +186,16 @@ All tools:
 ## Tool-Specific Features
 
 ### Claude Code
-- Rich slash commands
+- Rich slash commands (`/workspace.brainstorm` etc.)
 - MCP server integration (search workspace)
 - Hooks for automation
 - Best documentation coverage
+
+### Codex CLI
+- Slash commands (`/workspace_brainstorm` etc.)
+- `AGENTS.md` for automatic workspace context — no setup needed per session
+- MCP server integration (`[mcp_servers.cortext]`)
+- Agent-first design; good for multi-agent workflows
 
 ### Cursor
 - AI-powered code completion
@@ -170,14 +220,15 @@ All tools:
 ### 1. Start with One Tool
 Choose the tool you'll use most and start there:
 ```bash
-cortext init --ai=claude  # or cursor, opencode, gemini
+cortext init --ai=claude  # or codex, cursor, opencode, gemini
 ```
 
 ### 2. Add Others as Needed
-Re-run init with a different tool:
+Use `--add-tool` on an existing workspace (non-destructive — won't touch your customizations):
 ```bash
 cd ~/my-workspace
-cortext init --ai=cursor
+cortext upgrade --add-tool codex
+cortext mcp install --ai codex
 ```
 
 ### 3. Keep Constitution Updated
@@ -198,21 +249,24 @@ Regardless of tool, follow the same patterns:
 
 ## Comparison Matrix
 
-| Feature | Claude Code | Cursor | OpenCode | Gemini CLI |
-|---------|-------------|--------|----------|------------|
-| Slash Commands | ✅ Full | ❌ No | ✅ Yes | ✅ Yes |
-| Rules/Context | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| MCP Server | ✅ Yes | ⚠️ Limited | ⚠️ Coming | ❌ No |
-| Local Models | ❌ No | ❌ No | ✅ Yes | ❌ No |
-| Code Completion | ⚠️ Limited | ✅ Excellent | ⚠️ Basic | ❌ No |
-| Conversation Templates | ✅ Yes | ⚠️ Via Rules | ✅ Yes | ✅ Yes |
-| Git Integration | ✅ Good | ✅ Good | ✅ Good | ⚠️ Manual |
+| Feature | Claude Code | Codex CLI | Cursor | OpenCode | Gemini CLI |
+|---------|-------------|-----------|--------|----------|------------|
+| Slash Commands | ✅ Full | ✅ Full | ❌ No | ✅ Yes | ✅ Yes |
+| Auto Context (AGENTS.md) | ✅ CLAUDE.md | ✅ AGENTS.md | ✅ .cursorrules | ✅ Yes | ✅ Yes |
+| MCP Server | ✅ Yes | ✅ Yes | ⚠️ Limited | ⚠️ Coming | ❌ No |
+| Local Models | ❌ No | ❌ No | ❌ No | ✅ Yes | ❌ No |
+| Code Completion | ⚠️ Limited | ✅ Good | ✅ Excellent | ⚠️ Basic | ❌ No |
+| Conversation Templates | ✅ Yes | ✅ Yes | ⚠️ Via Rules | ✅ Yes | ✅ Yes |
+| Git Integration | ✅ Good | ✅ Good | ✅ Good | ✅ Good | ⚠️ Manual |
+| Custom Types | ✅ Full | ✅ Full | ⚠️ Via Rules | ✅ Yes | ✅ Yes |
 
 ## Troubleshooting
 
 ### Commands Not Working
 
 **Claude Code**: Ensure you're in the workspace directory with `.claude/commands/`
+
+**Codex CLI**: Check that `~/.codex/prompts/` has the workspace prompt files. If missing, run `cortext upgrade --add-tool codex` from the workspace directory.
 
 **Cursor**: Check that `.cursorrules` exists
 
