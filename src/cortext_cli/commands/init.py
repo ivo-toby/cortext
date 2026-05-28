@@ -452,9 +452,12 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
             configured_tools.append("OpenCode")
 
         elif tool == "codex":
-            # Convert commands to Codex prompt format and create AGENTS.md
+            # Write to workspace for version control reference
             codex_prompts_dir = workspace_dir / ".codex" / "prompts"
             converted = convert_claude_commands_to_codex(commands_dir, codex_prompts_dir)
+            # Also install to ~/.codex/prompts/ — the only location Codex scans
+            user_codex_prompts = Path.home() / ".codex" / "prompts"
+            convert_claude_commands_to_codex(commands_dir, user_codex_prompts)
             create_codex_workspace_agents_md(workspace_dir)
             if converted:
                 configured_tools.append(f"Codex CLI ({len(converted)} prompts)")
@@ -1230,23 +1233,28 @@ def _install_opencode_mcp_config(workspace_dir: Path, tracker: StepTracker) -> b
 
 
 def _check_codex_mcp_installed(workspace_dir: Path) -> bool:
-    """Check if Codex MCP config is installed (.codex/config.toml or ~/.codex/config.toml)."""
+    """Check if cortext is registered in a Codex MCP config."""
+    import tomllib
+
     for config_path in [
         workspace_dir / ".codex" / "config.toml",
         Path.home() / ".codex" / "config.toml",
     ]:
         if config_path.exists():
             try:
-                content = config_path.read_text()
-                if "cortext" in content and "mcp_servers" in content:
+                config = tomllib.loads(config_path.read_text())
+                if "cortext" in config.get("mcp_servers", {}):
                     return True
-            except IOError:
+            except Exception:
                 pass
     return False
 
 
 def _install_codex_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
-    """Install MCP config for Codex CLI (.codex/config.toml in workspace)."""
+    """Install MCP config for Codex CLI (.codex/config.toml in workspace).
+
+    Uses keyed-table syntax [mcp_servers.cortext] as required by Codex.
+    """
     import tomllib
 
     with Status("[cyan]Configuring MCP for Codex...[/cyan]", console=console):
@@ -1254,18 +1262,16 @@ def _install_codex_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool
         codex_dir.mkdir(parents=True, exist_ok=True)
         config_path = codex_dir / "config.toml"
 
-        new_server_block = '\n[[mcp_servers]]\nname = "cortext"\ncommand = "cortext-mcp"\n'
+        new_server_block = '\n[mcp_servers.cortext]\ncommand = "cortext-mcp"\n'
 
         if config_path.exists():
             try:
                 existing = tomllib.loads(config_path.read_text())
-                servers = existing.get("mcp_servers", [])
-                if any(s.get("name") == "cortext" for s in servers):
+                if "cortext" in existing.get("mcp_servers", {}):
                     tracker.add_info("MCP server already configured in .codex/config.toml")
                     return True
             except Exception:
                 pass
-            # Append to existing file
             config_path.write_text(config_path.read_text().rstrip() + new_server_block)
         else:
             config_path.write_text(

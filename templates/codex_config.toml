@@ -1,6 +1,5 @@
 # Codex CLI configuration for Cortext workspace
-# https://developers.openai.com/codex/config-basic
+# https://developers.openai.com/codex/config-reference
 
-[[mcp_servers]]
-name = "cortext"
+[mcp_servers.cortext]
 command = "cortext-mcp"

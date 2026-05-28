@@ -450,8 +450,11 @@ def add_missing_slash_commands(
                 console.print(f"[red]✗[/red] Failed to add Claude {cmd_name}: {e}")
 
     # --- Codex CLI ---
+    # .codex/prompts/ (workspace VCS reference) drives detection; prompts are
+    # also written to ~/.codex/prompts/ which is the only path Codex scans.
     codex_dir = workspace_dir / ".codex" / "prompts"
     if codex_dir.exists():
+        user_codex_dir = Path.home() / ".codex" / "prompts"
         missing = package_names - {f.name for f in codex_dir.glob("*.md")}
         if missing and verbose:
             console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing)} new prompt(s)")
@@ -463,6 +466,9 @@ def add_missing_slash_commands(
                 src = commands_dir / cmd_name
                 codex_content, _ = convert_md_for_codex(src)
                 (codex_dir / cmd_name).write_text(codex_content)
+                # Install to user home so Codex actually discovers it
+                user_codex_dir.mkdir(parents=True, exist_ok=True)
+                (user_codex_dir / cmd_name).write_text(codex_content)
                 if verbose:
                     console.print(f"[green]✓[/green] Added Codex prompt: {cmd_name}")
                 added_count += 1
