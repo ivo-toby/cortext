@@ -173,7 +173,23 @@ Make it executable:
 chmod +x .workspace/scripts/bash/{type_name}.sh
 ```
 
-### Step 4: Generate Slash Command
+### Step 4: Generate Slash Commands
+
+Create the command file with **conversation-first instructions** for each AI tool that is active in this workspace.
+
+**Always create** `.claude/commands/workspace_{type_name}.md`:
+
+**Also create** for each tool whose directory exists:
+- `.codex/prompts/workspace_{type_name}.md` — if `.codex/prompts/` exists (Codex CLI)
+- `.opencode/command/workspace_{type_name}.md` — if `.opencode/command/` exists (OpenCode)
+- `.gemini/commands/{type_name}.toml` — if `.gemini/commands/` exists (Gemini CLI, TOML format)
+
+To detect active tools:
+```bash
+ls -d .claude/commands .codex/prompts .opencode/command .gemini/commands 2>/dev/null
+```
+
+**Claude / Codex / OpenCode** (`.md` format — reuse the same content for all three):
 
 Create `.claude/commands/workspace_{type_name}.md` with **conversation-first instructions**:
 
@@ -182,6 +198,7 @@ Create `.claude/commands/workspace_{type_name}.md` with **conversation-first ins
 description: {description}
 tags: [workspace, {type_name}, conversation]
 ---
+<!-- For .codex/prompts/workspace_{type_name}.md, strip tags/category; for Codex add argument-hint: "<title>" -->
 
 # Workspace {Type Name}
 
@@ -242,6 +259,17 @@ When the user indicates they want to stop:
 - If yes, use `/workspace.stop-conversation`
 ```
 
+**Gemini** (`.gemini/commands/{type_name}.toml`, only if `.gemini/commands/` exists):
+
+```toml
+description = "{description}"
+
+prompt = """
+# Workspace {Type Name}
+[same content as Claude/Codex command above, without the frontmatter block]
+"""
+```
+
 ### Step 5: Update Registry
 
 Add the new type to `.workspace/registry.json`:
@@ -280,6 +308,23 @@ Add the new type to `.workspace/registry.json`:
 }
 ```
 
+If Codex, OpenCode, or Gemini command files were also created, add their entries to `generated_with.files`:
+
+```json
+      "command_codex": {
+        "path": ".codex/prompts/workspace_{type_name}.md",
+        "original_hash": "{compute SHA-256 hash}"
+      },
+      "command_opencode": {
+        "path": ".opencode/command/workspace_{type_name}.md",
+        "original_hash": "{compute SHA-256 hash}"
+      },
+      "command_gemini": {
+        "path": ".gemini/commands/{type_name}.toml",
+        "original_hash": "{compute SHA-256 hash}"
+      }
+```
+
 **Important Notes on Hash Computation:**
 - After creating all files, compute SHA-256 hashes for each
 - Use Python's hashlib: `hashlib.sha256(content.encode()).hexdigest()`
@@ -299,6 +344,10 @@ git add .workspace/templates/{type_name}.md
 git add .workspace/scripts/bash/{type_name}.sh
 git add .claude/commands/workspace_{type_name}.md
 git add .workspace/registry.json
+# Also stage any other tool-specific command files that were created:
+# git add .codex/prompts/workspace_{type_name}.md  (if Codex)
+# git add .opencode/command/workspace_{type_name}.md  (if OpenCode)
+# git add .gemini/commands/{type_name}.toml  (if Gemini)
 
 git commit -m "[workspace] Add '{type_name}' conversation type
 
@@ -318,9 +367,14 @@ Show the user:
 Files created:
 - Template: .workspace/templates/{type_name}.md
 - Script: .workspace/scripts/bash/{type_name}.sh
-- Slash command: /workspace.{type_name}
+- Claude command: .claude/commands/workspace_{type_name}.md
+[- Codex prompt: .codex/prompts/workspace_{type_name}.md]  (if Codex active)
+[- OpenCode command: .opencode/command/workspace_{type_name}.md]  (if OpenCode active)
+[- Gemini command: .gemini/commands/{type_name}.toml]  (if Gemini active)
 
-You can now use: /workspace.{type_name}
+You can now use:
+- Claude Code: /workspace.{type_name}
+- Codex CLI: /workspace_{type_name}  (if configured)
 
 To edit the template later:
 Edit .workspace/templates/{type_name}.md

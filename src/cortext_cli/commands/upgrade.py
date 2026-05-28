@@ -20,6 +20,10 @@ from cortext_cli.commands.init import (
     compute_generated_files_metadata,
     get_builtin_conversation_types,
 )
+from cortext_cli.converters import (
+    convert_md_for_codex,
+    convert_md_to_toml,
+)
 from cortext_cli.utils import (
     FileStatus,
     VersionStatus,
@@ -405,58 +409,111 @@ def add_missing_slash_commands(
     dry_run: bool,
     verbose: bool,
 ) -> int:
-    """Check for and add missing slash command files.
+    """Check for and add missing command files across all active AI tool directories.
 
-    Args:
-        workspace_dir: Workspace root directory
-        dry_run: If True, don't make changes
-        verbose: Show detailed progress
+    Syncs built-in commands to each AI tool directory that exists in the workspace:
+    - Claude Code (.claude/commands/)
+    - Codex CLI (.codex/prompts/)
+    - OpenCode (.opencode/command/)
+    - Gemini (.gemini/commands/)
 
     Returns:
-        Number of commands added
+        Number of command files added across all tools
     """
     commands_dir = get_commands_dir()
     if not commands_dir.exists():
         return 0
 
-    claude_commands_dir = workspace_dir / ".claude" / "commands"
-    if not claude_commands_dir.exists():
+    package_commands = list(commands_dir.glob("*.md"))
+    if not package_commands:
         return 0
 
-    # Get all command files from package
-    package_commands = {f.name for f in commands_dir.glob("*.md")}
-
-    # Get existing command files in workspace
-    workspace_commands = {f.name for f in claude_commands_dir.glob("*.md")}
-
-    # Find missing commands
-    missing_commands = package_commands - workspace_commands
-
-    if not missing_commands:
-        return 0
-
-    if verbose:
-        console.print(f"\n[cyan]ℹ[/cyan]  Found {len(missing_commands)} new slash command(s): {', '.join(missing_commands)}")
-
+    package_names = {f.name for f in package_commands}
     added_count = 0
-    for cmd_name in missing_commands:
-        if dry_run:
-            console.print(f"[dim]Would add command: {cmd_name}[/dim]")
-            continue
 
-        try:
-            src_file = commands_dir / cmd_name
-            dest_file = claude_commands_dir / cmd_name
-            shutil.copy2(src_file, dest_file)
+    # --- Claude Code ---
+    claude_dir = workspace_dir / ".claude" / "commands"
+    if claude_dir.exists():
+        missing = package_names - {f.name for f in claude_dir.glob("*.md")}
+        if missing and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Claude: {len(missing)} new command(s)")
+        for cmd_name in missing:
+            if dry_run:
+                console.print(f"[dim]Would add Claude command: {cmd_name}[/dim]")
+                continue
+            try:
+                shutil.copy2(commands_dir / cmd_name, claude_dir / cmd_name)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added Claude command: {cmd_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add Claude {cmd_name}: {e}")
 
-            if verbose:
-                console.print(f"[green]✓[/green] Added command: {cmd_name}")
-            added_count += 1
-        except Exception as e:
-            console.print(f"[red]✗[/red] Failed to add {cmd_name}: {e}")
+    # --- Codex CLI ---
+    codex_dir = workspace_dir / ".codex" / "prompts"
+    if codex_dir.exists():
+        missing = package_names - {f.name for f in codex_dir.glob("*.md")}
+        if missing and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing)} new prompt(s)")
+        for cmd_name in missing:
+            if dry_run:
+                console.print(f"[dim]Would add Codex prompt: {cmd_name}[/dim]")
+                continue
+            try:
+                src = commands_dir / cmd_name
+                codex_content, _ = convert_md_for_codex(src)
+                (codex_dir / cmd_name).write_text(codex_content)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added Codex prompt: {cmd_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add Codex {cmd_name}: {e}")
+
+    # --- OpenCode ---
+    opencode_dir = workspace_dir / ".opencode" / "command"
+    if opencode_dir.exists():
+        missing = package_names - {f.name for f in opencode_dir.glob("*.md")}
+        if missing and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  OpenCode: {len(missing)} new command(s)")
+        for cmd_name in missing:
+            if dry_run:
+                console.print(f"[dim]Would add OpenCode command: {cmd_name}[/dim]")
+                continue
+            try:
+                shutil.copy2(commands_dir / cmd_name, opencode_dir / cmd_name)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added OpenCode command: {cmd_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add OpenCode {cmd_name}: {e}")
+
+    # --- Gemini ---
+    gemini_dir = workspace_dir / ".gemini" / "commands"
+    if gemini_dir.exists():
+        package_toml_names = {f.stem + ".toml" for f in package_commands}
+        existing_toml = {f.name for f in gemini_dir.glob("*.toml")}
+        missing_toml = package_toml_names - existing_toml
+        if missing_toml and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Gemini: {len(missing_toml)} new command(s)")
+        for toml_name in missing_toml:
+            md_name = toml_name.replace(".toml", ".md")
+            src = commands_dir / md_name
+            if not src.exists():
+                continue
+            if dry_run:
+                console.print(f"[dim]Would add Gemini command: {toml_name}[/dim]")
+                continue
+            try:
+                toml_content, _ = convert_md_to_toml(src)
+                (gemini_dir / toml_name).write_text(toml_content)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added Gemini command: {toml_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add Gemini {toml_name}: {e}")
 
     if added_count > 0 and not verbose:
-        console.print(f"[green]✓[/green] Added {added_count} new slash command(s)")
+        console.print(f"[green]✓[/green] Added {added_count} new command file(s) across AI tools")
 
     return added_count
 
