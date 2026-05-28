@@ -170,7 +170,7 @@ def _add_tool_to_workspace(workspace_dir: Path, tool: str, verbose: bool):
         except Exception as e:
             tracker.add_warning(f"Could not sync custom types: {e}")
 
-    tracker.print_summary()
+    tracker.display()
     console.print(
         f"\n[green]✓[/green] {tool.title()} support added.\n"
         f"[dim]Run 'cortext mcp install --ai {tool}' to also configure the MCP server.[/dim]"
