@@ -450,30 +450,45 @@ def add_missing_slash_commands(
                 console.print(f"[red]✗[/red] Failed to add Claude {cmd_name}: {e}")
 
     # --- Codex CLI ---
-    # .codex/prompts/ (workspace VCS reference) drives detection; prompts are
-    # also written to ~/.codex/prompts/ which is the only path Codex scans.
+    # .codex/prompts/ is the workspace VCS reference; ~/.codex/prompts/ is the
+    # only path Codex actually scans. Both must be kept in sync independently:
+    # workspace may be complete while the user home is empty (e.g. new machine).
     codex_dir = workspace_dir / ".codex" / "prompts"
     if codex_dir.exists():
         user_codex_dir = Path.home() / ".codex" / "prompts"
-        missing = package_names - {f.name for f in codex_dir.glob("*.md")}
-        if missing and verbose:
-            console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing)} new prompt(s)")
-        for cmd_name in missing:
+        workspace_existing = {f.name for f in codex_dir.glob("*.md")}
+        user_existing = {f.name for f in user_codex_dir.glob("*.md")} if user_codex_dir.exists() else set()
+
+        missing_workspace = package_names - workspace_existing
+        # Also sync any workspace prompts absent from user home (covers fresh machines)
+        missing_user = (package_names | workspace_existing) - user_existing
+
+        all_to_process = missing_workspace | missing_user
+        if all_to_process and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing_workspace)} workspace + "
+                          f"{len(missing_user - missing_workspace)} user-home prompt(s) to sync")
+
+        for cmd_name in all_to_process:
+            # Prefer the package source; fall back to existing workspace file
+            pkg_src = commands_dir / cmd_name
+            src = pkg_src if pkg_src.exists() else codex_dir / cmd_name
+            if not src.exists():
+                continue
             if dry_run:
-                console.print(f"[dim]Would add Codex prompt: {cmd_name}[/dim]")
+                console.print(f"[dim]Would sync Codex prompt: {cmd_name}[/dim]")
                 continue
             try:
-                src = commands_dir / cmd_name
                 codex_content, _ = convert_md_for_codex(src)
-                (codex_dir / cmd_name).write_text(codex_content)
-                # Install to user home so Codex actually discovers it
-                user_codex_dir.mkdir(parents=True, exist_ok=True)
-                (user_codex_dir / cmd_name).write_text(codex_content)
+                if cmd_name in missing_workspace:
+                    (codex_dir / cmd_name).write_text(codex_content)
+                if cmd_name in missing_user:
+                    user_codex_dir.mkdir(parents=True, exist_ok=True)
+                    (user_codex_dir / cmd_name).write_text(codex_content)
                 if verbose:
-                    console.print(f"[green]✓[/green] Added Codex prompt: {cmd_name}")
+                    console.print(f"[green]✓[/green] Synced Codex prompt: {cmd_name}")
                 added_count += 1
             except Exception as e:
-                console.print(f"[red]✗[/red] Failed to add Codex {cmd_name}: {e}")
+                console.print(f"[red]✗[/red] Failed to sync Codex {cmd_name}: {e}")
 
     # --- OpenCode ---
     opencode_dir = workspace_dir / ".opencode" / "command"
