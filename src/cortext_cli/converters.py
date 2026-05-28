@@ -2,6 +2,16 @@
 
 from pathlib import Path
 
+_CODEX_ARGUMENT_HINTS = {
+    "workspace_brainstorm": "<topic>",
+    "workspace_debug": "<problem>",
+    "workspace_plan": "<feature>",
+    "workspace_learn": "<subject>",
+    "workspace_meeting": "<title>",
+    "workspace_review": "<title>",
+    "workspace_projectmanage": "<project-name>",
+}
+
 
 def convert_md_to_toml(md_path: Path) -> tuple[str, str]:
     """
@@ -68,6 +78,135 @@ def convert_claude_commands_to_gemini(
             print(f"Warning: Could not convert {md_file.name}: {e}")
 
     return converted
+
+
+def convert_md_for_codex(md_path: Path) -> tuple[str, str]:
+    """Convert Claude markdown command to Codex prompt format.
+
+    Strips Claude-specific frontmatter fields (name, tags, category) and
+    rewrites frontmatter with only description and argument-hint.
+
+    Returns:
+        tuple: (codex_content, command_name)
+    """
+    content = md_path.read_text()
+
+    description = ""
+    prompt_content = content
+
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        if len(parts) >= 3:
+            frontmatter = parts[1].strip()
+            prompt_content = parts[2].strip()
+
+            for line in frontmatter.split("\n"):
+                if line.startswith("description:"):
+                    description = line.split(":", 1)[1].strip()
+                    break
+
+    command_name = md_path.stem
+    argument_hint = _CODEX_ARGUMENT_HINTS.get(command_name)
+
+    frontmatter_lines = []
+    if description:
+        frontmatter_lines.append(f"description: {description}")
+    if argument_hint:
+        frontmatter_lines.append(f"argument-hint: \"{argument_hint}\"")
+
+    if frontmatter_lines:
+        codex_content = f"---\n{chr(10).join(frontmatter_lines)}\n---\n\n{prompt_content}"
+    else:
+        codex_content = prompt_content
+
+    return codex_content, command_name
+
+
+def convert_claude_commands_to_codex(commands_dir: Path, codex_prompts_dir: Path) -> list[str]:
+    """Convert all Claude markdown commands to Codex prompt format.
+
+    Returns:
+        list: Names of converted commands
+    """
+    codex_prompts_dir.mkdir(parents=True, exist_ok=True)
+    converted = []
+
+    for md_file in commands_dir.glob("*.md"):
+        try:
+            codex_content, command_name = convert_md_for_codex(md_file)
+            dest_file = codex_prompts_dir / md_file.name
+            dest_file.write_text(codex_content)
+            converted.append(command_name)
+        except Exception as e:
+            print(f"Warning: Could not convert {md_file.name} for Codex: {e}")
+
+    return converted
+
+
+def create_codex_workspace_agents_md(workspace_dir: Path) -> Path:
+    """Create an AGENTS.md file for Codex at the workspace root.
+
+    Codex reads AGENTS.md hierarchically for persistent instructions.
+
+    Returns:
+        Path to created AGENTS.md file
+    """
+    agents_content = """# Cortext Workspace — Codex Instructions
+
+This is a Cortext workspace: a git-backed, locally-hosted platform for
+AI-augmented knowledge work. All conversations are versioned in git.
+
+## Key Files
+
+- `.workspace/memory/constitution.md` — Read this first. It contains the
+  user's working principles, preferences, and guidelines for all AI interactions.
+- `.workspace/memory/context.md` — Current focus areas and active projects.
+- `.workspace/memory/decisions.md` — Log of important decisions made.
+- `.workspace/registry.json` — Tracks all conversation types and their metadata.
+
+Always read `.workspace/memory/constitution.md` before starting any conversation.
+
+## Conversation Types
+
+Start a conversation by running the corresponding script. Each script creates
+a structured document and an initial git commit.
+
+| Type | Script | Purpose |
+|------|--------|---------|
+| Brainstorm | `.workspace/scripts/bash/brainstorm.sh "<topic>"` | Free-form ideation |
+| Debug | `.workspace/scripts/bash/debug.sh "<problem>"` | Systematic troubleshooting |
+| Plan | `.workspace/scripts/bash/plan.sh "<feature>"` | Feature/project planning |
+| Learn | `.workspace/scripts/bash/learn.sh "<subject>"` | Learning documentation |
+| Meeting | `.workspace/scripts/bash/meeting.sh "<title>"` | Meeting notes |
+| Review | `.workspace/scripts/bash/review.sh "<title>"` | Code/design reviews |
+| Project | `.workspace/scripts/bash/projectmanage.sh "<name>"` | Project tracking |
+
+Custom conversation types are listed in `.workspace/registry.json` with their
+scripts under `.workspace/scripts/bash/`.
+
+## Workflow
+
+1. Run the script for the desired conversation type to create a document.
+2. Edit the document using standard file edit tools as the conversation progresses.
+3. Commit work atomically to git with clear `[conversation]` prefix messages.
+4. Cross-reference related past conversations when relevant.
+
+## MCP Search
+
+If the Cortext MCP server is running, you have access to `search_workspace`,
+`get_context`, and `get_decision_history` tools for semantic search across
+all past conversations.
+
+## Git Conventions
+
+- Commit format: `[conversation] <summary>`
+- Conversation tags: `conv/{id}` (e.g., `conv/001-brainstorm-api`)
+- Always work on the `main` branch unless otherwise specified.
+"""
+
+    agents_md_path = workspace_dir / "AGENTS.md"
+    agents_md_path.write_text(agents_content)
+    return agents_md_path
 
 
 def create_opencode_config(workspace_dir: Path) -> Path:

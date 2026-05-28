@@ -16,7 +16,9 @@ from rich.prompt import Confirm, Prompt
 from rich.status import Status
 
 from cortext_cli.converters import (
+    convert_claude_commands_to_codex,
     convert_claude_commands_to_gemini,
+    create_codex_workspace_agents_md,
     create_opencode_config,
 )
 from cortext_cli.utils import (
@@ -98,7 +100,7 @@ def init(
         None, help="Path or name for the workspace (e.g., '.', '/path/to/workspace', or 'myworkspace')"
     ),
     ai: str = typer.Option(
-        "claude", help="AI tool to configure (claude, opencode, gemini, all)"
+        "claude", help="AI tool to configure (claude, opencode, gemini, codex, all)"
     ),
     path: Optional[str] = typer.Option(
         None, help="Explicit path for workspace (takes precedence over positional argument)"
@@ -239,6 +241,13 @@ def init(
                 f"\n[cyan]Claude Code:[/cyan]\n"
                 f"  - Run 'claude' in the workspace directory\n"
                 f"  - Available commands: /workspace.brainstorm, /workspace.debug, etc.\n"
+            )
+        if ai in ["codex", "all"]:
+            console.print(
+                f"\n[cyan]Codex CLI:[/cyan]\n"
+                f"  - Run 'codex' in the workspace directory\n"
+                f"  - AGENTS.md provides workspace context automatically\n"
+                f"  - Prompts available in .codex/prompts/ (use /workspace_brainstorm etc.)\n"
             )
 
     except Exception as e:
@@ -411,7 +420,7 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
         tracker.add_warning("Commands directory not found, skipping AI configuration")
         return
 
-    tools_to_configure = ["claude", "opencode", "gemini", "cursor"] if ai == "all" else [ai]
+    tools_to_configure = ["claude", "opencode", "gemini", "codex", "cursor"] if ai == "all" else [ai]
     configured_tools = []
 
     for tool in tools_to_configure:
@@ -441,6 +450,17 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
                 dest_file = opencode_dir / cmd_file.name
                 shutil.copy2(cmd_file, dest_file)
             configured_tools.append("OpenCode")
+
+        elif tool == "codex":
+            # Write to workspace for version control reference
+            codex_prompts_dir = workspace_dir / ".codex" / "prompts"
+            converted = convert_claude_commands_to_codex(commands_dir, codex_prompts_dir)
+            # Also install to ~/.codex/prompts/ — the only location Codex scans
+            user_codex_prompts = Path.home() / ".codex" / "prompts"
+            convert_claude_commands_to_codex(commands_dir, user_codex_prompts)
+            create_codex_workspace_agents_md(workspace_dir)
+            if converted:
+                configured_tools.append(f"Codex CLI ({len(converted)} prompts)")
 
         elif tool == "cursor":
             # Copy Cursor rules
@@ -501,6 +521,14 @@ def compute_generated_files_metadata(workspace_dir: Path, type_id: str, type_con
         files_metadata["command_gemini"] = {
             "path": f".gemini/commands/{command_name}.toml",
             "original_hash": compute_file_hash(gemini_cmd_path)
+        }
+
+    # Hash Codex prompt file if it exists
+    codex_cmd_path = workspace_dir / ".codex" / "prompts" / f"{command_name}.md"
+    if codex_cmd_path.exists():
+        files_metadata["command_codex"] = {
+            "path": f".codex/prompts/{command_name}.md",
+            "original_hash": compute_file_hash(codex_cmd_path)
         }
 
     return {
@@ -919,6 +947,8 @@ def configure_mcp(
             already_installed[agent] = _check_gemini_mcp_installed()
         elif agent == "opencode":
             already_installed[agent] = _check_opencode_mcp_installed(workspace_dir)
+        elif agent == "codex":
+            already_installed[agent] = _check_codex_mcp_installed(workspace_dir)
         else:
             already_installed[agent] = False
 
@@ -1046,7 +1076,7 @@ def _check_opencode_mcp_installed(workspace_dir: Path) -> bool:
 def _get_agents_from_ai_option(ai: str) -> list[str]:
     """Get list of agents to configure from ai option."""
     if ai == "all":
-        return ["claude", "gemini", "opencode"]
+        return ["claude", "gemini", "opencode", "codex"]
     else:
         return [ai]
 
@@ -1061,6 +1091,8 @@ def _install_mcp_config_for_agent(
         return _install_gemini_mcp_config(workspace_dir, tracker)
     elif agent == "opencode":
         return _install_opencode_mcp_config(workspace_dir, tracker)
+    elif agent == "codex":
+        return _install_codex_mcp_config(workspace_dir, tracker)
     else:
         # Cursor doesn't support MCP
         return False
@@ -1197,4 +1229,55 @@ def _install_opencode_mcp_config(workspace_dir: Path, tracker: StepTracker) -> b
 
         config_path.write_text(json_module.dumps(new_config, indent=2))
         tracker.add_step("Created opencode.json with MCP config")
+    return True
+
+
+def _check_codex_mcp_installed(workspace_dir: Path) -> bool:
+    """Check if cortext is registered in a Codex MCP config."""
+    import tomllib
+
+    for config_path in [
+        workspace_dir / ".codex" / "config.toml",
+        Path.home() / ".codex" / "config.toml",
+    ]:
+        if config_path.exists():
+            try:
+                config = tomllib.loads(config_path.read_text())
+                if "cortext" in config.get("mcp_servers", {}):
+                    return True
+            except Exception:
+                pass
+    return False
+
+
+def _install_codex_mcp_config(workspace_dir: Path, tracker: StepTracker) -> bool:
+    """Install MCP config for Codex CLI (.codex/config.toml in workspace).
+
+    Uses keyed-table syntax [mcp_servers.cortext] as required by Codex.
+    """
+    import tomllib
+
+    with Status("[cyan]Configuring MCP for Codex...[/cyan]", console=console):
+        codex_dir = workspace_dir / ".codex"
+        codex_dir.mkdir(parents=True, exist_ok=True)
+        config_path = codex_dir / "config.toml"
+
+        new_server_block = '\n[mcp_servers.cortext]\ncommand = "cortext-mcp"\n'
+
+        if config_path.exists():
+            try:
+                existing = tomllib.loads(config_path.read_text())
+                if "cortext" in existing.get("mcp_servers", {}):
+                    tracker.add_info("MCP server already configured in .codex/config.toml")
+                    return True
+            except Exception:
+                pass
+            config_path.write_text(config_path.read_text().rstrip() + new_server_block)
+        else:
+            config_path.write_text(
+                "# Codex CLI configuration for Cortext workspace\n"
+                + new_server_block
+            )
+
+        tracker.add_step("Created .codex/config.toml with MCP server")
     return True

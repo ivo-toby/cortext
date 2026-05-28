@@ -24,53 +24,67 @@ Cortext is a git-backed, AI-assisted workspace that provides persistent memory, 
 
 ### Installation
 
+**Recommended — install directly from GitHub (no clone required):**
+
 ```bash
-# Clone the repository
-git clone https://github.com/ivo-toby/cortext.git
-cd cortext
+uv tool install git+https://github.com/ivo-toby/cortext.git
 
-# Basic installation (without RAG features)
-pip install -e .
+# With RAG support for semantic search
+uv tool install "git+https://github.com/ivo-toby/cortext.git[rag]"
 
-# Or with RAG support for semantic search
-pip install -e '.[rag]'
-
-# Or with all optional features
-pip install -e '.[all]'
-
-# Or with uv (recommended)
-uv tool install .
+# With all optional features
+uv tool install "git+https://github.com/ivo-toby/cortext.git[all]"
 
 # Verify installation
 cortext check
-
-# Check version
-cortext -v
 ```
 
-**Optional Features:**
-- **RAG**: Semantic search with local embeddings (`pip install -e '.[rag]'`)
-- **All**: All optional features (`pip install -e '.[all]'`)
+**For development (local clone):**
+
+```bash
+git clone https://github.com/ivo-toby/cortext.git
+cd cortext
+
+pip install -e .            # basic
+pip install -e '.[rag]'    # with RAG
+pip install -e '.[all]'    # everything
+# or: uv tool install -e .
+```
+
+### Upgrading
+
+```bash
+# If installed via uv tool (recommended)
+uv tool upgrade cortext-workspace
+
+# If that doesn't pick up the latest version, reinstall:
+uv tool install git+https://github.com/ivo-toby/cortext.git --force
+
+# If installed via pip / editable clone
+cd /path/to/cortext && git pull && pip install -e . --force-reinstall
+```
+
+After upgrading, run `cortext upgrade` in your workspace to sync any new commands
+and templates.
 
 ### Troubleshooting Installation
 
 If you encounter `ModuleNotFoundError` after pulling updates:
 
 ```bash
-# If you installed with pip
+# uv tool install
+uv tool install git+https://github.com/ivo-toby/cortext.git --force
+
+# uv pip / editable
+uv pip install -e . --reinstall
+
+# pip editable
 pip install -e . --force-reinstall
-
-# If you installed with uv pip
-uv pip install -e .
-
-# If you installed with uv tool
-uv tool install --reinstall --force .
 ```
 
 **Common issues:**
-- `ModuleNotFoundError: No module named 'packaging'` - Dependencies not installed, use `--force-reinstall`
-- Virtual environment caching - Deactivate and reactivate your venv, or use `--force-reinstall`
-- uv tool cache - Use `uv tool install --reinstall --force .` to clear cache
+- `ModuleNotFoundError: No module named 'packaging'` — use `--force` / `--force-reinstall`
+- uv tool cache stale — `uv tool install ... --force` clears it
 
 ### Initialize Your Workspace
 

@@ -18,7 +18,12 @@ from rich.syntax import Syntax
 from cortext_cli.commands.init import (
     SCRIPT_API_VERSION,
     compute_generated_files_metadata,
+    configure_ai_tools,
     get_builtin_conversation_types,
+)
+from cortext_cli.converters import (
+    convert_md_for_codex,
+    convert_md_to_toml,
 )
 from cortext_cli.utils import (
     FileStatus,
@@ -132,6 +137,89 @@ def show_diff(original_content: str, current_content: str, file_path: str):
         console.print("[dim]No differences found[/dim]")
 
 
+def _add_tool_to_workspace(workspace_dir: Path, tool: str, verbose: bool):
+    """Wire up a new AI tool on an existing workspace non-destructively.
+
+    Creates the tool's command directory (e.g. .codex/prompts/), converts
+    and installs all built-in commands plus custom types from the registry,
+    and writes AGENTS.md / config files as appropriate.
+    """
+    supported = {"claude", "codex", "opencode", "gemini", "cursor"}
+    if tool not in supported:
+        console.print(f"[red]✗[/red] Unknown tool '{tool}'. Supported: {', '.join(sorted(supported))}")
+        raise typer.Exit(1)
+
+    tracker = StepTracker(f"Adding {tool.title()} support")
+
+    # Configure built-in AI tool files (commands, AGENTS.md, etc.)
+    configure_ai_tools(workspace_dir, tool, tracker)
+
+    # Also sync custom conversation types from registry
+    registry_path = workspace_dir / ".workspace" / "registry.json"
+    if registry_path.exists():
+        try:
+            registry = json.loads(registry_path.read_text())
+            custom_types = {
+                tid: cfg
+                for tid, cfg in registry.get("conversation_types", {}).items()
+                if not cfg.get("built_in", True)
+            }
+            if custom_types:
+                _sync_custom_types_to_tool(workspace_dir, tool, custom_types, verbose)
+                tracker.add_step(f"Synced {len(custom_types)} custom type(s) to {tool}")
+        except Exception as e:
+            tracker.add_warning(f"Could not sync custom types: {e}")
+
+    tracker.print_summary()
+    console.print(
+        f"\n[green]✓[/green] {tool.title()} support added.\n"
+        f"[dim]Run 'cortext mcp install --ai {tool}' to also configure the MCP server.[/dim]"
+    )
+
+
+def _sync_custom_types_to_tool(
+    workspace_dir: Path, tool: str, custom_types: dict, verbose: bool
+):
+    """Copy/convert custom type command files into the new tool's directory."""
+    from cortext_cli.converters import convert_md_for_codex, convert_md_to_toml
+
+    for type_id, type_config in custom_types.items():
+        command_name = type_config.get("command", "").lstrip("/").replace(".", "_")
+        if not command_name:
+            continue
+
+        # Source: Claude command (always present for user-created types)
+        claude_src = workspace_dir / ".claude" / "commands" / f"{command_name}.md"
+        if not claude_src.exists():
+            continue
+
+        try:
+            if tool == "codex":
+                codex_dir = workspace_dir / ".codex" / "prompts"
+                if codex_dir.exists():
+                    content, _ = convert_md_for_codex(claude_src)
+                    (codex_dir / f"{command_name}.md").write_text(content)
+                    user_dir = Path.home() / ".codex" / "prompts"
+                    user_dir.mkdir(parents=True, exist_ok=True)
+                    (user_dir / f"{command_name}.md").write_text(content)
+            elif tool == "opencode":
+                opencode_dir = workspace_dir / ".opencode" / "command"
+                if opencode_dir.exists():
+                    import shutil as _shutil
+                    _shutil.copy2(claude_src, opencode_dir / f"{command_name}.md")
+            elif tool == "gemini":
+                gemini_dir = workspace_dir / ".gemini" / "commands"
+                if gemini_dir.exists():
+                    content, _ = convert_md_to_toml(claude_src)
+                    (gemini_dir / f"{command_name}.toml").write_text(content)
+            elif tool == "claude":
+                pass  # already the source
+            if verbose:
+                console.print(f"[green]✓[/green] Synced custom type '{type_id}' for {tool}")
+        except Exception as e:
+            console.print(f"[yellow]⚠[/yellow] Could not sync '{type_id}' for {tool}: {e}")
+
+
 def upgrade_command(
     workspace_path: Optional[Path] = typer.Option(
         None,
@@ -171,8 +259,18 @@ def upgrade_command(
         "-v",
         help="Show detailed progress",
     ),
+    add_tool: Optional[str] = typer.Option(
+        None,
+        "--add-tool",
+        help="Add support for a new AI tool without re-initializing (e.g. codex, opencode, gemini)",
+    ),
 ):
-    """Upgrade workspace to current Cortext version."""
+    """Upgrade workspace to current Cortext version.
+
+    To add a new AI tool to an existing workspace without re-initializing:
+
+        cortext upgrade --add-tool codex
+    """
 
     # Determine workspace directory
     if workspace_path is None:
@@ -185,6 +283,11 @@ def upgrade_command(
         console.print("[red]✗[/red] Not a Cortext workspace")
         console.print(f"[dim]Directory: {workspace_dir}[/dim]")
         raise typer.Exit(1)
+
+    # --add-tool: non-destructively wire up a new AI tool on an existing workspace
+    if add_tool:
+        _add_tool_to_workspace(workspace_dir, add_tool, verbose)
+        return
 
     # Check workspace version status
     status, workspace_version = check_workspace_version(workspace_dir)
@@ -405,58 +508,132 @@ def add_missing_slash_commands(
     dry_run: bool,
     verbose: bool,
 ) -> int:
-    """Check for and add missing slash command files.
+    """Check for and add missing command files across all active AI tool directories.
 
-    Args:
-        workspace_dir: Workspace root directory
-        dry_run: If True, don't make changes
-        verbose: Show detailed progress
+    Syncs built-in commands to each AI tool directory that exists in the workspace:
+    - Claude Code (.claude/commands/)
+    - Codex CLI (.codex/prompts/)
+    - OpenCode (.opencode/command/)
+    - Gemini (.gemini/commands/)
 
     Returns:
-        Number of commands added
+        Number of command files added across all tools
     """
     commands_dir = get_commands_dir()
     if not commands_dir.exists():
         return 0
 
-    claude_commands_dir = workspace_dir / ".claude" / "commands"
-    if not claude_commands_dir.exists():
+    package_commands = list(commands_dir.glob("*.md"))
+    if not package_commands:
         return 0
 
-    # Get all command files from package
-    package_commands = {f.name for f in commands_dir.glob("*.md")}
-
-    # Get existing command files in workspace
-    workspace_commands = {f.name for f in claude_commands_dir.glob("*.md")}
-
-    # Find missing commands
-    missing_commands = package_commands - workspace_commands
-
-    if not missing_commands:
-        return 0
-
-    if verbose:
-        console.print(f"\n[cyan]ℹ[/cyan]  Found {len(missing_commands)} new slash command(s): {', '.join(missing_commands)}")
-
+    package_names = {f.name for f in package_commands}
     added_count = 0
-    for cmd_name in missing_commands:
-        if dry_run:
-            console.print(f"[dim]Would add command: {cmd_name}[/dim]")
-            continue
 
-        try:
-            src_file = commands_dir / cmd_name
-            dest_file = claude_commands_dir / cmd_name
-            shutil.copy2(src_file, dest_file)
+    # --- Claude Code ---
+    claude_dir = workspace_dir / ".claude" / "commands"
+    if claude_dir.exists():
+        missing = package_names - {f.name for f in claude_dir.glob("*.md")}
+        if missing and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Claude: {len(missing)} new command(s)")
+        for cmd_name in missing:
+            if dry_run:
+                console.print(f"[dim]Would add Claude command: {cmd_name}[/dim]")
+                continue
+            try:
+                shutil.copy2(commands_dir / cmd_name, claude_dir / cmd_name)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added Claude command: {cmd_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add Claude {cmd_name}: {e}")
 
-            if verbose:
-                console.print(f"[green]✓[/green] Added command: {cmd_name}")
-            added_count += 1
-        except Exception as e:
-            console.print(f"[red]✗[/red] Failed to add {cmd_name}: {e}")
+    # --- Codex CLI ---
+    # .codex/prompts/ is the workspace VCS reference; ~/.codex/prompts/ is the
+    # only path Codex actually scans. Both must be kept in sync independently:
+    # workspace may be complete while the user home is empty (e.g. new machine).
+    codex_dir = workspace_dir / ".codex" / "prompts"
+    if codex_dir.exists():
+        user_codex_dir = Path.home() / ".codex" / "prompts"
+        workspace_existing = {f.name for f in codex_dir.glob("*.md")}
+        user_existing = {f.name for f in user_codex_dir.glob("*.md")} if user_codex_dir.exists() else set()
+
+        missing_workspace = package_names - workspace_existing
+        # Also sync any workspace prompts absent from user home (covers fresh machines)
+        missing_user = (package_names | workspace_existing) - user_existing
+
+        all_to_process = missing_workspace | missing_user
+        if all_to_process and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing_workspace)} workspace + "
+                          f"{len(missing_user - missing_workspace)} user-home prompt(s) to sync")
+
+        for cmd_name in all_to_process:
+            # Prefer the package source; fall back to existing workspace file
+            pkg_src = commands_dir / cmd_name
+            src = pkg_src if pkg_src.exists() else codex_dir / cmd_name
+            if not src.exists():
+                continue
+            if dry_run:
+                console.print(f"[dim]Would sync Codex prompt: {cmd_name}[/dim]")
+                continue
+            try:
+                codex_content, _ = convert_md_for_codex(src)
+                if cmd_name in missing_workspace:
+                    (codex_dir / cmd_name).write_text(codex_content)
+                if cmd_name in missing_user:
+                    user_codex_dir.mkdir(parents=True, exist_ok=True)
+                    (user_codex_dir / cmd_name).write_text(codex_content)
+                if verbose:
+                    console.print(f"[green]✓[/green] Synced Codex prompt: {cmd_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to sync Codex {cmd_name}: {e}")
+
+    # --- OpenCode ---
+    opencode_dir = workspace_dir / ".opencode" / "command"
+    if opencode_dir.exists():
+        missing = package_names - {f.name for f in opencode_dir.glob("*.md")}
+        if missing and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  OpenCode: {len(missing)} new command(s)")
+        for cmd_name in missing:
+            if dry_run:
+                console.print(f"[dim]Would add OpenCode command: {cmd_name}[/dim]")
+                continue
+            try:
+                shutil.copy2(commands_dir / cmd_name, opencode_dir / cmd_name)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added OpenCode command: {cmd_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add OpenCode {cmd_name}: {e}")
+
+    # --- Gemini ---
+    gemini_dir = workspace_dir / ".gemini" / "commands"
+    if gemini_dir.exists():
+        package_toml_names = {f.stem + ".toml" for f in package_commands}
+        existing_toml = {f.name for f in gemini_dir.glob("*.toml")}
+        missing_toml = package_toml_names - existing_toml
+        if missing_toml and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Gemini: {len(missing_toml)} new command(s)")
+        for toml_name in missing_toml:
+            md_name = toml_name.replace(".toml", ".md")
+            src = commands_dir / md_name
+            if not src.exists():
+                continue
+            if dry_run:
+                console.print(f"[dim]Would add Gemini command: {toml_name}[/dim]")
+                continue
+            try:
+                toml_content, _ = convert_md_to_toml(src)
+                (gemini_dir / toml_name).write_text(toml_content)
+                if verbose:
+                    console.print(f"[green]✓[/green] Added Gemini command: {toml_name}")
+                added_count += 1
+            except Exception as e:
+                console.print(f"[red]✗[/red] Failed to add Gemini {toml_name}: {e}")
 
     if added_count > 0 and not verbose:
-        console.print(f"[green]✓[/green] Added {added_count} new slash command(s)")
+        console.print(f"[green]✓[/green] Added {added_count} new command file(s) across AI tools")
 
     return added_count
 
