@@ -28,9 +28,9 @@ jobs:
 
       - name: Determine version bump type
         id: bump-type
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          COMMIT_MSG='${{ github.event.head_commit.message }}'
-
           # Check for breaking changes (major bump)
           if echo "$COMMIT_MSG" | grep -qE "BREAKING CHANGE:|!:"; then
             echo "bump=major" >> $GITHUB_OUTPUT
