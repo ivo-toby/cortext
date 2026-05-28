@@ -18,10 +18,10 @@ def _check_rag_dependencies():
     except ImportError:
         console.print("[red]Error:[/red] RAG dependencies not installed")
         console.print("\nInstall with:")
-        console.print("  [cyan]pip install 'cortext-workspace[rag]'[/cyan]")
+        console.print("  [cyan]uv tool install \"git+https://github.com/ivo-toby/cortext.git[rag]\" --force[/cyan]")
         console.print("  [cyan]pip install -e '.[rag]'[/cyan]  (for development)")
         console.print("\nOr install all optional dependencies:")
-        console.print("  [cyan]pip install 'cortext-workspace[all]'[/cyan]")
+        console.print("  [cyan]uv tool install \"git+https://github.com/ivo-toby/cortext.git[all]\" --force[/cyan]")
         raise typer.Exit(1)
 
 
