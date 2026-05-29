@@ -22,7 +22,7 @@ from cortext_cli.commands.init import (
     get_builtin_conversation_types,
 )
 from cortext_cli.converters import (
-    convert_md_for_codex,
+    convert_md_to_codex_skill,
     convert_md_to_toml,
 )
 from cortext_cli.utils import (
@@ -181,7 +181,7 @@ def _sync_custom_types_to_tool(
     workspace_dir: Path, tool: str, custom_types: dict, verbose: bool
 ):
     """Copy/convert custom type command files into the new tool's directory."""
-    from cortext_cli.converters import convert_md_for_codex, convert_md_to_toml
+    from cortext_cli.converters import convert_md_to_codex_skill, convert_md_to_toml
 
     for type_id, type_config in custom_types.items():
         command_name = type_config.get("command", "").lstrip("/").replace(".", "_")
@@ -195,13 +195,9 @@ def _sync_custom_types_to_tool(
 
         try:
             if tool == "codex":
-                codex_dir = workspace_dir / ".codex" / "prompts"
-                if codex_dir.exists():
-                    content, _ = convert_md_for_codex(claude_src)
-                    (codex_dir / f"{command_name}.md").write_text(content)
-                    user_dir = Path.home() / ".codex" / "prompts"
-                    user_dir.mkdir(parents=True, exist_ok=True)
-                    (user_dir / f"{command_name}.md").write_text(content)
+                skills_dir = workspace_dir / ".agents" / "skills"
+                if skills_dir.exists():
+                    convert_md_to_codex_skill(claude_src, skills_dir)
             elif tool == "opencode":
                 opencode_dir = workspace_dir / ".opencode" / "command"
                 if opencode_dir.exists():
@@ -548,46 +544,34 @@ def add_missing_slash_commands(
             except Exception as e:
                 console.print(f"[red]✗[/red] Failed to add Claude {cmd_name}: {e}")
 
-    # --- Codex CLI ---
-    # .codex/prompts/ is the workspace VCS reference; ~/.codex/prompts/ is the
-    # only path Codex actually scans. Both must be kept in sync independently:
-    # workspace may be complete while the user home is empty (e.g. new machine).
-    codex_dir = workspace_dir / ".codex" / "prompts"
-    if codex_dir.exists():
-        user_codex_dir = Path.home() / ".codex" / "prompts"
-        workspace_existing = {f.name for f in codex_dir.glob("*.md")}
-        user_existing = {f.name for f in user_codex_dir.glob("*.md")} if user_codex_dir.exists() else set()
+    # --- Codex CLI (Skills) ---
+    # Skills live in .agents/skills/<skill_name>/SKILL.md and are auto-loaded
+    # by Codex when running in the workspace directory.
+    # Skill names use hyphens (workspace-brainstorm); source files use underscores.
+    # Invoked as $workspace-brainstorm or auto-selected by Codex.
+    codex_skills_dir = workspace_dir / ".agents" / "skills"
+    if codex_skills_dir.exists():
+        existing_skills = {d.name for d in codex_skills_dir.iterdir() if d.is_dir()}
+        expected_skills = {f.stem.replace("_", "-") for f in package_commands}
+        missing_skills = expected_skills - existing_skills
 
-        missing_workspace = package_names - workspace_existing
-        # Also sync any workspace prompts absent from user home (covers fresh machines)
-        missing_user = (package_names | workspace_existing) - user_existing
+        if missing_skills and verbose:
+            console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing_skills)} new skill(s)")
 
-        all_to_process = missing_workspace | missing_user
-        if all_to_process and verbose:
-            console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing_workspace)} workspace + "
-                          f"{len(missing_user - missing_workspace)} user-home prompt(s) to sync")
-
-        for cmd_name in all_to_process:
-            # Prefer the package source; fall back to existing workspace file
-            pkg_src = commands_dir / cmd_name
-            src = pkg_src if pkg_src.exists() else codex_dir / cmd_name
+        for skill_name in missing_skills:
+            src = commands_dir / f"{skill_name.replace('-', '_')}.md"
             if not src.exists():
                 continue
             if dry_run:
-                console.print(f"[dim]Would sync Codex prompt: {cmd_name}[/dim]")
+                console.print(f"[dim]Would add Codex skill: {skill_name}[/dim]")
                 continue
             try:
-                codex_content, _ = convert_md_for_codex(src)
-                if cmd_name in missing_workspace:
-                    (codex_dir / cmd_name).write_text(codex_content)
-                if cmd_name in missing_user:
-                    user_codex_dir.mkdir(parents=True, exist_ok=True)
-                    (user_codex_dir / cmd_name).write_text(codex_content)
+                convert_md_to_codex_skill(src, codex_skills_dir)
                 if verbose:
-                    console.print(f"[green]✓[/green] Synced Codex prompt: {cmd_name}")
+                    console.print(f"[green]✓[/green] Added Codex skill: {skill_name}")
                 added_count += 1
             except Exception as e:
-                console.print(f"[red]✗[/red] Failed to sync Codex {cmd_name}: {e}")
+                console.print(f"[red]✗[/red] Failed to add Codex skill {skill_name}: {e}")
 
     # --- OpenCode ---
     opencode_dir = workspace_dir / ".opencode" / "command"

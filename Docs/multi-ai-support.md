@@ -65,9 +65,9 @@ OpenCode will read the workspace configuration and provide assistance based on y
 
 ### 4. Codex CLI ✅ Full Support
 
-**Configuration**: `.codex/prompts/` (workspace reference) + `~/.codex/prompts/` (active)
+**Configuration**: `.agents/skills/` (auto-loaded by Codex) + `AGENTS.md`
 
-Cortext converts commands to Codex prompt format and writes an `AGENTS.md` at the workspace root that Codex reads automatically for context.
+Cortext installs workspace commands as Codex **skills** — the current Codex standard for reusable workflows. Skills are auto-loaded from `.agents/skills/` when you `cd` into the workspace. An `AGENTS.md` at the workspace root provides automatic context on every session.
 
 **Setup (new workspace)**:
 ```bash
@@ -82,14 +82,19 @@ cortext upgrade --add-tool codex
 cortext mcp install --ai codex
 ```
 
-**Available Commands** (via `/` in Codex):
-- `/workspace_brainstorm` - Start brainstorming
-- `/workspace_debug` - Debug systematically
-- `/workspace_plan` - Plan features
-- `/workspace_learn` - Document learning
-- `/workspace_meeting` - Capture meetings
-- `/workspace_review` - Conduct reviews
-- `/workspace_add` - Create custom types
+**Using Skills in Codex**:
+
+Explicit invocation (type `$` to pick from a menu):
+```
+$workspace-brainstorm   Start brainstorming
+$workspace-debug        Debug systematically
+$workspace-plan         Plan features
+$workspace-learn        Document learning
+$workspace-meeting      Capture meetings
+$workspace-review       Conduct reviews
+```
+
+Skills can also be **auto-selected** by Codex when your request matches the skill description — no explicit invocation needed.
 
 **MCP Server**: Configured via `.codex/config.toml`:
 ```toml
@@ -98,9 +103,9 @@ command = "cortext-mcp"
 ```
 
 **Notes**:
-- Prompts are installed to `~/.codex/prompts/` (the path Codex scans) and also kept in `.codex/prompts/` for version control
-- `AGENTS.md` at workspace root is read by Codex automatically — no slash command needed for context
-- Custom types created with `/workspace.add` are also available as `/workspace_{type}` in Codex
+- Skills go in `.agents/skills/<name>/SKILL.md` — auto-loaded when Codex runs in the workspace
+- `AGENTS.md` at workspace root is read by Codex automatically — no setup needed per session
+- Custom types created with `$workspace-add` are also installed as skills in `.agents/skills/`
 
 ### 5. Gemini CLI ✅ Basic Support
 
@@ -136,7 +141,7 @@ This creates:
 - `.claude/commands/` - Claude Code
 - `.cursorrules` - Cursor
 - `.opencode/` - OpenCode
-- `.codex/prompts/` + `~/.codex/prompts/` + `AGENTS.md` - Codex CLI
+- `.agents/skills/` + `AGENTS.md` - Codex CLI
 - `.gemini/commands/` - Gemini CLI
 
 ## Constitution: The Key to Consistency
@@ -192,7 +197,7 @@ All tools:
 - Best documentation coverage
 
 ### Codex CLI
-- Slash commands (`/workspace_brainstorm` etc.)
+- Skills (`$workspace-brainstorm` etc., auto-selected or via `$` menu)
 - `AGENTS.md` for automatic workspace context — no setup needed per session
 - MCP server integration (`[mcp_servers.cortext]`)
 - Agent-first design; good for multi-agent workflows
@@ -266,7 +271,7 @@ Regardless of tool, follow the same patterns:
 
 **Claude Code**: Ensure you're in the workspace directory with `.claude/commands/`
 
-**Codex CLI**: Check that `~/.codex/prompts/` has the workspace prompt files. If missing, run `cortext upgrade --add-tool codex` from the workspace directory.
+**Codex CLI**: Check that `.agents/skills/` exists in your workspace root. If missing, run `cortext upgrade --add-tool codex` from the workspace directory. Skills are invoked with `$workspace-brainstorm` or auto-selected by Codex.
 
 **Cursor**: Check that `.cursorrules` exists
 
