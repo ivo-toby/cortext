@@ -16,10 +16,10 @@ from rich.prompt import Confirm, Prompt
 from rich.status import Status
 
 from cortext_cli.converters import (
-    convert_claude_commands_to_codex,
     convert_claude_commands_to_gemini,
     create_codex_workspace_agents_md,
     create_opencode_config,
+    install_codex_skills,
 )
 from cortext_cli.utils import (
     AGENT_CONFIG,
@@ -452,15 +452,13 @@ def configure_ai_tools(workspace_dir: Path, ai: str, tracker: StepTracker):
             configured_tools.append("OpenCode")
 
         elif tool == "codex":
-            # Write to workspace for version control reference
-            codex_prompts_dir = workspace_dir / ".codex" / "prompts"
-            converted = convert_claude_commands_to_codex(commands_dir, codex_prompts_dir)
-            # Also install to ~/.codex/prompts/ — the only location Codex scans
-            user_codex_prompts = Path.home() / ".codex" / "prompts"
-            convert_claude_commands_to_codex(commands_dir, user_codex_prompts)
+            # Skills live in .agents/skills/ — auto-loaded by Codex when in this dir.
+            # Invoked as $workspace_brainstorm or auto-selected by Codex.
+            skills_dir = workspace_dir / ".agents" / "skills"
+            installed = install_codex_skills(commands_dir, skills_dir)
             create_codex_workspace_agents_md(workspace_dir)
-            if converted:
-                configured_tools.append(f"Codex CLI ({len(converted)} prompts)")
+            if installed:
+                configured_tools.append(f"Codex CLI ({len(installed)} skills)")
 
         elif tool == "cursor":
             # Copy Cursor rules
