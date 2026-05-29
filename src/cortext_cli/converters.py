@@ -123,7 +123,9 @@ def convert_md_for_codex(md_path: Path) -> tuple[str, str]:
 
 
 def convert_claude_commands_to_codex(commands_dir: Path, codex_prompts_dir: Path) -> list[str]:
-    """Convert all Claude markdown commands to Codex prompt format.
+    """Convert all Claude markdown commands to Codex prompt format (deprecated).
+
+    Codex custom prompts are deprecated. Prefer install_codex_skills() instead.
 
     Returns:
         list: Names of converted commands
@@ -141,6 +143,65 @@ def convert_claude_commands_to_codex(commands_dir: Path, codex_prompts_dir: Path
             print(f"Warning: Could not convert {md_file.name} for Codex: {e}")
 
     return converted
+
+
+def convert_md_to_codex_skill(md_path: Path, skills_dir: Path) -> str:
+    """Convert a Claude markdown command to a Codex skill directory.
+
+    Creates <skills_dir>/<skill_name>/SKILL.md with name+description frontmatter.
+    Codex loads skills from .agents/skills/ in the project and ~/.agents/skills/.
+
+    Returns:
+        skill_name (the directory name created)
+    """
+    content = md_path.read_text()
+
+    description = ""
+    body = content
+
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        if len(parts) >= 3:
+            frontmatter = parts[1].strip()
+            body = parts[2].strip()
+            for line in frontmatter.split("\n"):
+                if line.startswith("description:"):
+                    description = line.split(":", 1)[1].strip()
+                    break
+
+    skill_name = md_path.stem  # e.g. workspace_brainstorm
+    skill_dir = skills_dir / skill_name
+    skill_dir.mkdir(parents=True, exist_ok=True)
+
+    skill_content = f"---\nname: {skill_name}\ndescription: {description}\n---\n\n{body}"
+    (skill_dir / "SKILL.md").write_text(skill_content)
+
+    return skill_name
+
+
+def install_codex_skills(commands_dir: Path, skills_dir: Path) -> list[str]:
+    """Convert all Claude markdown commands to Codex skills.
+
+    Skills directory layout:
+        <skills_dir>/<skill_name>/SKILL.md
+
+    Codex discovers skills from .agents/skills/ at the project root and
+    ~/.agents/skills/ for user-level skills.
+
+    Returns:
+        list: skill names installed
+    """
+    skills_dir.mkdir(parents=True, exist_ok=True)
+    installed = []
+
+    for md_file in commands_dir.glob("*.md"):
+        try:
+            skill_name = convert_md_to_codex_skill(md_file, skills_dir)
+            installed.append(skill_name)
+        except Exception as e:
+            print(f"Warning: Could not convert {md_file.name} to Codex skill: {e}")
+
+    return installed
 
 
 def create_codex_workspace_agents_md(workspace_dir: Path) -> Path:
