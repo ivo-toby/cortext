@@ -86,12 +86,12 @@ cortext mcp install --ai codex
 
 Explicit invocation (type `$` to pick from a menu):
 ```
-$workspace_brainstorm   Start brainstorming
-$workspace_debug        Debug systematically
-$workspace_plan         Plan features
-$workspace_learn        Document learning
-$workspace_meeting      Capture meetings
-$workspace_review       Conduct reviews
+$workspace-brainstorm   Start brainstorming
+$workspace-debug        Debug systematically
+$workspace-plan         Plan features
+$workspace-learn        Document learning
+$workspace-meeting      Capture meetings
+$workspace-review       Conduct reviews
 ```
 
 Skills can also be **auto-selected** by Codex when your request matches the skill description — no explicit invocation needed.
@@ -105,7 +105,7 @@ command = "cortext-mcp"
 **Notes**:
 - Skills go in `.agents/skills/<name>/SKILL.md` — auto-loaded when Codex runs in the workspace
 - `AGENTS.md` at workspace root is read by Codex automatically — no setup needed per session
-- Custom types created with `$workspace_add` are also installed as skills in `.agents/skills/`
+- Custom types created with `$workspace-add` are also installed as skills in `.agents/skills/`
 
 ### 5. Gemini CLI ✅ Basic Support
 
@@ -197,7 +197,7 @@ All tools:
 - Best documentation coverage
 
 ### Codex CLI
-- Skills (`$workspace_brainstorm` etc., auto-selected or via `$` menu)
+- Skills (`$workspace-brainstorm` etc., auto-selected or via `$` menu)
 - `AGENTS.md` for automatic workspace context — no setup needed per session
 - MCP server integration (`[mcp_servers.cortext]`)
 - Agent-first design; good for multi-agent workflows
@@ -271,7 +271,7 @@ Regardless of tool, follow the same patterns:
 
 **Claude Code**: Ensure you're in the workspace directory with `.claude/commands/`
 
-**Codex CLI**: Check that `.agents/skills/` exists in your workspace root. If missing, run `cortext upgrade --add-tool codex` from the workspace directory. Skills are invoked with `$workspace_brainstorm` or auto-selected by Codex.
+**Codex CLI**: Check that `.agents/skills/` exists in your workspace root. If missing, run `cortext upgrade --add-tool codex` from the workspace directory. Skills are invoked with `$workspace-brainstorm` or auto-selected by Codex.
 
 **Cursor**: Check that `.cursorrules` exists
 

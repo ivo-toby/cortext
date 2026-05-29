@@ -169,7 +169,7 @@ def convert_md_to_codex_skill(md_path: Path, skills_dir: Path) -> str:
                     description = line.split(":", 1)[1].strip()
                     break
 
-    skill_name = md_path.stem  # e.g. workspace_brainstorm
+    skill_name = md_path.stem.replace("_", "-")  # e.g. workspace-brainstorm
     skill_dir = skills_dir / skill_name
     skill_dir.mkdir(parents=True, exist_ok=True)
 

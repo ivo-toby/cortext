@@ -544,22 +544,22 @@ def add_missing_slash_commands(
             except Exception as e:
                 console.print(f"[red]✗[/red] Failed to add Claude {cmd_name}: {e}")
 
-    # --- Codex CLI ---
     # --- Codex CLI (Skills) ---
     # Skills live in .agents/skills/<skill_name>/SKILL.md and are auto-loaded
     # by Codex when running in the workspace directory.
-    # Invoked as $workspace_brainstorm or auto-selected by Codex.
+    # Skill names use hyphens (workspace-brainstorm); source files use underscores.
+    # Invoked as $workspace-brainstorm or auto-selected by Codex.
     codex_skills_dir = workspace_dir / ".agents" / "skills"
     if codex_skills_dir.exists():
         existing_skills = {d.name for d in codex_skills_dir.iterdir() if d.is_dir()}
-        expected_skills = {f.stem for f in package_commands}
+        expected_skills = {f.stem.replace("_", "-") for f in package_commands}
         missing_skills = expected_skills - existing_skills
 
         if missing_skills and verbose:
             console.print(f"\n[cyan]ℹ[/cyan]  Codex: {len(missing_skills)} new skill(s)")
 
         for skill_name in missing_skills:
-            src = commands_dir / f"{skill_name}.md"
+            src = commands_dir / f"{skill_name.replace('-', '_')}.md"
             if not src.exists():
                 continue
             if dry_run:

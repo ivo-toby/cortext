@@ -126,12 +126,12 @@ cortext upgrade --add-tool codex && cortext mcp install --ai codex
 
 Codex automatically reads `AGENTS.md` at the workspace root for context. Workspace commands are installed as **skills** in `.agents/skills/` — invoke them with `$` or let Codex auto-select based on your request:
 ```
-$workspace_brainstorm      Start an ideation session
-$workspace_debug           Debug a problem systematically
-$workspace_plan            Plan a feature or project
-$workspace_learn           Document learning and take notes
-$workspace_meeting         Capture meeting notes and actions
-$workspace_review          Conduct code or design reviews
+$workspace-brainstorm      Start an ideation session
+$workspace-debug           Debug a problem systematically
+$workspace-plan            Plan a feature or project
+$workspace-learn           Document learning and take notes
+$workspace-meeting         Capture meeting notes and actions
+$workspace-review          Conduct code or design reviews
 ```
 
 ### With Claude Code
